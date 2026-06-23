@@ -234,7 +234,6 @@ html[data-theme="dark"] .pag-row.marca-programado{background:#1f3a29;border-colo
 .lemb-main{flex:1;min-width:0}
 .lemb-title{display:block;font-size:14px;font-weight:600;color:var(--ink)}
 .lemb-row.done .lemb-title{text-decoration:line-through;color:var(--ink-dim)}
-.lemb-obs{font-size:12.5px;color:var(--ink-soft);margin-top:4px;white-space:pre-wrap;line-height:1.4}
 .lemb-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:0 0 auto;padding-top:2px}
 .lemb-next{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border-radius:8px;padding:7px 10px;margin-top:8px;display:inline-flex;gap:8px;align-items:flex-start;line-height:1.35}
 .lemb-next b{color:var(--accent-deep);font-weight:700;flex:0 0 auto;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding-top:1px}
@@ -1396,7 +1395,7 @@ function renderLemb(){
     if(l.prazo)meta+='<span class="chip'+(atrasado?' danger':'')+'">📆 '+fmtDate(l.prazo)+(atrasado?' ⚠':'')+'</span>';
     return '<div class="lemb-row'+(l.concluido?' done':'')+'" onclick="openLemb(\''+l.id+'\')">'+
       '<span class="lemb-check" onclick="event.stopPropagation();toggleLembDone(\''+l.id+'\')">'+(l.concluido?'✓':'')+'</span>'+
-      '<div class="lemb-main"><span class="lemb-title">'+esc(l.titulo)+'</span>'+(l.observacoes&&l.observacoes.trim()?'<div class="lemb-obs">'+esc(l.observacoes)+'</div>':'')+lembNext(l)+'</div>'+
+      '<div class="lemb-main"><span class="lemb-title">'+esc(l.titulo)+'</span>'+lembNext(l)+'</div>'+
       '<div class="lemb-meta">'+meta+'</div></div>';
   }
   const resps=DATA.responsaveis||[];
