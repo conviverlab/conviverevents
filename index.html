@@ -238,6 +238,11 @@ html[data-theme="dark"] .pag-row.marca-programado{background:#1f3a29;border-colo
 .lemb-next{font-size:12.5px;color:var(--ink-soft);background:var(--panel-2);border-radius:8px;padding:7px 10px;margin-top:8px;display:inline-flex;gap:8px;align-items:flex-start;line-height:1.35}
 .lemb-next b{color:var(--accent-deep);font-weight:700;flex:0 0 auto;font-size:10px;text-transform:uppercase;letter-spacing:.4px;padding-top:1px}
 html[data-theme="dark"] .lemb-next b{color:var(--accent)}
+.lemb-grip{flex:0 0 auto;color:var(--ink-dim);font-size:15px;line-height:1;cursor:grab;padding:3px 2px 0;user-select:none}
+.lemb-grip:hover{color:var(--accent)}
+.lemb-row.lemb-drag{cursor:grab}
+.lemb-row.lemb-dragging{opacity:.45}
+.lemb-row.drag-over{border-color:var(--accent);box-shadow:var(--ring)}
 .oc-empty{text-align:center;color:var(--ink-dim);font-size:13px;font-style:italic;padding:30px}
 /* CALENDAR */
 .calwrap{padding:0 30px 50px}
@@ -662,7 +667,7 @@ const SB_COLS={
   tipos_servico:['id','nome','cor'],
   fornecedores:['id','nome','cnpj','cnpj_norm','cidade','estado','responsavel','telefone','email','tipos'],
   eventos:['id','nome','empreendimento','data_evento','hora_inicio','hora_fim','prioridade','responsavel','status','observacoes','checklist'],
-  lembretes:['id','titulo','responsavel','prazo','concluido','checklist','observacoes'],
+  lembretes:['id','titulo','responsavel','prazo','concluido','checklist','observacoes','ordem'],
   lancamentos:['id','titulo','empreendimento','evento_id','fornecedor','cnpj','cnpj_norm','forn_cidade','forn_estado','telefone','email','categoria','valor','forma_pagamento','parcela_atual','total_parcelas','data_limite','prioridade','responsavel','status','observacoes','checklist','oc','atividade','nf','link_nf','bx_adiantamento','data_solicitacao','endereco','banco','agencia','conta','pix'],
   pagadoria:['oc','atividade','usuario','data','status_atend','status_mov','coligada','empreendimento','fornecedor','cnpj','historico','dados_pgto','responsavel','valor'],
   pagadoria_marcacoes:['oc','marca','obs','data_prog']
@@ -1396,12 +1401,14 @@ function renderLemb(){
     if(!txt)return '';
     return '<div class="lemb-next"><b>Próx</b><span>'+esc(txt)+'</span></div>';
   }
-  function rowHtml(l){
+  function rowHtml(l,drag){
     const atrasado=isLembAtrasado(l);
     let meta='';
     if(l.responsavel)meta+='<span class="chip">👤 '+esc(l.responsavel)+'</span>';
     if(l.prazo)meta+='<span class="chip'+(atrasado?' danger':'')+'">📆 '+fmtDate(l.prazo)+(atrasado?' ⚠':'')+'</span>';
-    return '<div class="lemb-row'+(l.concluido?' done':'')+'" onclick="openLemb(\''+l.id+'\')">'+
+    const dnd=drag?' draggable="true" ondragstart="lembDragStart(event,\''+l.id+'\')" ondragend="lembDragEnd(event)" ondragover="lembDragOver(event)" ondragleave="lembDragLeave(event)" ondrop="lembDrop(event,\''+l.id+'\')"':'';
+    return '<div class="lemb-row'+(l.concluido?' done':'')+(drag?' lemb-drag':'')+'"'+dnd+' onclick="openLemb(\''+l.id+'\')">'+
+      (drag?'<span class="lemb-grip" title="Arraste para reordenar">⠿</span>':'')+
       '<span class="lemb-check" onclick="event.stopPropagation();toggleLembDone(\''+l.id+'\')">'+(l.concluido?'✓':'')+'</span>'+
       '<div class="lemb-main"><span class="lemb-title">'+esc(l.titulo)+'</span>'+lembNext(l)+'</div>'+
       '<div class="lemb-meta">'+meta+'</div></div>';
@@ -1412,12 +1419,32 @@ function renderLemb(){
     resps.map(r=>'<option '+(lembFilters.resp===r.nome?'selected':'')+'>'+esc(r.nome)+'</option>').join('')+'</select>'+
     (lembFilters.resp?'<span class="fclear" onclick="lembFilters.resp=\'\';renderLemb()">limpar filtro</span>':'')+
   '</div>';
+  const canReorder=!q && !lembFilters.resp;   // só reordena com a lista completa
   let html=fbar;
-  html+= abertos.length?abertos.map(rowHtml).join(''):'<div class="oc-empty">Nenhum lembrete em aberto. 🎉</div>';
+  html+= abertos.length?abertos.map(l=>rowHtml(l,canReorder)).join(''):'<div class="oc-empty">Nenhum lembrete em aberto. 🎉</div>';
   html+='<div class="lemb-section'+(lembShowDone?'':' collapsed')+'" onclick="lembShowDone=!lembShowDone;renderLemb()">'+
     '<span class="chev">▾</span> Concluídos <span class="ln"></span> '+feitos.length+'</div>';
-  if(lembShowDone)html+= feitos.length?feitos.map(rowHtml).join(''):'<div class="oc-empty">Nenhum lembrete concluído ainda.</div>';
+  if(lembShowDone)html+= feitos.length?feitos.map(l=>rowHtml(l,false)).join(''):'<div class="oc-empty">Nenhum lembrete concluído ainda.</div>';
   box.innerHTML=html;
+}
+/* ---------- Reordenar lembretes por arrastar ---------- */
+let lembDragId=null;
+function lembDragStart(ev,id){lembDragId=id;ev.dataTransfer.effectAllowed='move';try{ev.dataTransfer.setData('text/plain',id);}catch(e){}ev.currentTarget.classList.add('lemb-dragging');}
+function lembDragEnd(ev){ev.currentTarget.classList.remove('lemb-dragging');document.querySelectorAll('.lemb-row.drag-over').forEach(r=>r.classList.remove('drag-over'));lembDragId=null;}
+function lembDragOver(ev){ev.preventDefault();ev.dataTransfer.dropEffect='move';ev.currentTarget.classList.add('drag-over');}
+function lembDragLeave(ev){ev.currentTarget.classList.remove('drag-over');}
+function lembDrop(ev,targetId){ev.preventDefault();reorderLemb(lembDragId,targetId);}
+function reindexLemb(){DATA.lembretes.forEach((l,i)=>l.ordem=i);}
+function sortLembByOrder(){DATA.lembretes.sort((a,b)=>{const ao=(a.ordem==null?1e9:a.ordem),bo=(b.ordem==null?1e9:b.ordem);return ao-bo;});}
+function reorderLemb(dragId,targetId){
+  if(!dragId||dragId===targetId)return;
+  const arr=DATA.lembretes;
+  const from=arr.findIndex(x=>x.id===dragId), to=arr.findIndex(x=>x.id===targetId);
+  if(from<0||to<0)return;
+  const [item]=arr.splice(from,1);
+  const t=arr.findIndex(x=>x.id===targetId);
+  arr.splice(from<to?t+1:t,0,item);   // descendo → depois do alvo; subindo → antes
+  reindexLemb();persist();renderLemb();
 }
 
 let lembDraft=null, lembEditId=null, lembDraftChecklist=[];
@@ -1500,7 +1527,7 @@ function saveLemb(){
     toast('Lembrete salvo ✓');
   }else{
     lembDraft.id=uid('lemb');lembDraft.concluido=false;
-    DATA.lembretes.unshift(lembDraft);
+    DATA.lembretes.unshift(lembDraft);reindexLemb();
     toast('Lembrete criado ✓');
   }
   persist();closeLemb();renderLemb();
@@ -1978,6 +2005,7 @@ async function loadFromSupabase(){
   (marc||[]).forEach(m=>{DATA.pag_extras[m.oc]={marca:m.marca||'',obs:m.obs||'',data_prog:m.data_prog||''};});
   if(!Array.isArray(DATA.checklist_models))DATA.checklist_models=[];
   ['eventos','lembretes','lancamentos','empreendimentos','coligadas','responsaveis','fornecedores_cat','checklist_models','tipos_servico','pagadoria'].forEach(k=>{if(!Array.isArray(DATA[k]))DATA[k]=[];});
+  sortLembByOrder();   // respeita a ordem manual definida por arrastar
 }
 
 function hideLogin(){
