@@ -234,6 +234,7 @@ html[data-theme="dark"] .pag-row.marca-programado{background:#1f3a29;border-colo
 .lemb-main{flex:1;min-width:0}
 .lemb-title{display:block;font-size:14px;font-weight:600;color:var(--ink)}
 .lemb-row.done .lemb-title{text-decoration:line-through;color:var(--ink-dim)}
+.lemb-obs{font-size:12.5px;color:var(--ink-soft);margin-top:4px;white-space:pre-wrap;line-height:1.4}
 .lemb-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;flex:0 0 auto;padding-top:2px}
 .lemb-cl-list{margin-top:7px;display:flex;flex-direction:column;gap:3px}
 .lemb-cl-item{font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px}
@@ -656,7 +657,7 @@ const SB_COLS={
   tipos_servico:['id','nome','cor'],
   fornecedores:['id','nome','cnpj','cnpj_norm','cidade','estado','responsavel','telefone','email','tipos'],
   eventos:['id','nome','empreendimento','data_evento','hora_inicio','hora_fim','prioridade','responsavel','status','observacoes','checklist'],
-  lembretes:['id','titulo','responsavel','prazo','concluido','checklist'],
+  lembretes:['id','titulo','responsavel','prazo','concluido','checklist','observacoes'],
   lancamentos:['id','titulo','empreendimento','evento_id','fornecedor','cnpj','cnpj_norm','forn_cidade','forn_estado','telefone','email','categoria','valor','forma_pagamento','parcela_atual','total_parcelas','data_limite','prioridade','responsavel','status','observacoes','checklist','oc','atividade','nf','link_nf','bx_adiantamento','data_solicitacao','endereco','banco','agencia','conta','pix'],
   pagadoria:['oc','atividade','usuario','data','status_atend','status_mov','coligada','empreendimento','fornecedor','cnpj','historico','dados_pgto','responsavel','valor'],
   pagadoria_marcacoes:['oc','marca','obs','data_prog']
@@ -1398,7 +1399,7 @@ function renderLemb(){
     if(l.prazo)meta+='<span class="chip'+(atrasado?' danger':'')+'">📆 '+fmtDate(l.prazo)+(atrasado?' ⚠':'')+'</span>';
     return '<div class="lemb-row'+(l.concluido?' done':'')+'" onclick="openLemb(\''+l.id+'\')">'+
       '<span class="lemb-check" onclick="event.stopPropagation();toggleLembDone(\''+l.id+'\')">'+(l.concluido?'✓':'')+'</span>'+
-      '<div class="lemb-main"><span class="lemb-title">'+esc(l.titulo)+'</span>'+clList(l)+'</div>'+
+      '<div class="lemb-main"><span class="lemb-title">'+esc(l.titulo)+'</span>'+(l.observacoes&&l.observacoes.trim()?'<div class="lemb-obs">'+esc(l.observacoes)+'</div>':'')+clList(l)+'</div>'+
       '<div class="lemb-meta">'+meta+'</div></div>';
   }
   const resps=DATA.responsaveis||[];
@@ -1420,7 +1421,7 @@ function openLemb(id){
   lembEditId=id||null;
   const existing=id?(DATA.lembretes||[]).find(l=>l.id===id):null;
   lembDraft= existing ? JSON.parse(JSON.stringify(existing))
-    : {titulo:'',responsavel:'',prazo:'',concluido:false};
+    : {titulo:'',responsavel:'',prazo:'',concluido:false,observacoes:''};
   lembDraftChecklist=existing&&Array.isArray(existing.checklist)?JSON.parse(JSON.stringify(existing.checklist)):[];
   document.getElementById('lembModalTitle').textContent=existing?'Editar lembrete':'Novo lembrete';
   document.getElementById('lembDelBtn').style.display=existing?'inline-flex':'none';
@@ -1434,6 +1435,7 @@ function renderLembModal(){
     '<div class="field full"><label>O que precisa ser feito? *</label><input id="lembTitulo" value="'+esc(lembDraft.titulo)+'" placeholder="Ex: Confirmar fornecedor do São João"></div>'+
     '<div class="field"><label>Responsável</label><select id="lembResp">'+respOpts+'</select></div>'+
     '<div class="field"><label>Prazo</label><input type="date" id="lembPrazo" value="'+esc(lembDraft.prazo||'')+'"></div>'+
+    '<div class="field full"><label>Observações</label><textarea id="lembObs" placeholder="Detalhes, contexto, links…">'+esc(lembDraft.observacoes||'')+'</textarea></div>'+
   '</div>';
   let cl='<div class="checklist">'+
     '<div class="cl-head"><label>Checklist / etapas</label></div>'+
@@ -1465,6 +1467,7 @@ function saveLemb(){
   lembDraft.titulo=document.getElementById('lembTitulo').value.trim();
   lembDraft.responsavel=document.getElementById('lembResp').value;
   lembDraft.prazo=document.getElementById('lembPrazo').value||null;
+  lembDraft.observacoes=document.getElementById('lembObs').value.trim();
   if(!lembDraft.titulo){toast('Descreva o que precisa ser feito.',true);return;}
   lembDraft.checklist=lembDraftChecklist.filter(c=>c.text.trim());
   if(lembEditId){
@@ -1867,8 +1870,8 @@ function exportExcel(){
 
   // Lembretes
   const shLemb=sheet('Lembretes',
-    ['Título','Responsável','Prazo','Concluído','Etapas (checklist)'],
-    (DATA.lembretes||[]).map(l=>[l.titulo,l.responsavel,l.prazo,l.concluido?'sim':'não',
+    ['Título','Responsável','Prazo','Concluído','Observações','Etapas (checklist)'],
+    (DATA.lembretes||[]).map(l=>[l.titulo,l.responsavel,l.prazo,l.concluido?'sim':'não',l.observacoes,
       (l.checklist||[]).map(c=>(c.done?'[x] ':'[ ] ')+c.text).join('; ')]));
 
   // Lançamentos
