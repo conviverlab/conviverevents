@@ -302,6 +302,14 @@ html[data-theme="dark"] .cal-cell.today .cal-day{color:var(--accent)}
   padding:10px 12px;color:var(--ink);font-family:inherit;font-size:13.5px;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
 .field textarea{resize:vertical;min-height:56px}
+.rt-toolbar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.rt-btn{min-width:30px;height:30px;padding:0 7px;border:1px solid var(--line);background:var(--card);color:var(--ink-soft);border-radius:7px;cursor:pointer;font-size:13px;font-family:inherit;display:grid;place-items:center;transition:.15s}
+.rt-btn:hover{border-color:var(--accent);color:var(--ink)}
+.rt-editor{min-height:92px;max-height:240px;overflow-y:auto;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--bg);color:var(--ink);font-family:inherit;font-size:13.5px;line-height:1.5}
+.rt-editor:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.rt-editor:empty:before{content:attr(data-ph);color:var(--ink-dim)}
+.rt-editor ul,.rt-editor ol{margin:4px 0 4px 22px}
+.rt-editor p{margin:0 0 6px}
 .checklist{grid-column:1/-1;border-top:1px solid var(--line);padding-top:16px;margin-top:2px}
 .checklist .cl-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
 .checklist .cl-head label{font-size:11px;font-weight:700;color:var(--ink-soft);letter-spacing:.3px;text-transform:uppercase}
@@ -1431,7 +1439,18 @@ function renderLembModal(){
     '<div class="field full"><label>O que precisa ser feito? *</label><input id="lembTitulo" value="'+esc(lembDraft.titulo)+'" placeholder="Ex: Confirmar fornecedor do São João"></div>'+
     '<div class="field"><label>Responsável</label><select id="lembResp">'+respOpts+'</select></div>'+
     '<div class="field"><label>Prazo</label><input type="date" id="lembPrazo" value="'+esc(lembDraft.prazo||'')+'"></div>'+
-    '<div class="field full"><label>Observações</label><textarea id="lembObs" placeholder="Detalhes, contexto, links…">'+esc(lembDraft.observacoes||'')+'</textarea></div>'+
+    '<div class="field full"><label>Observações</label>'+
+      '<div class="rt-toolbar">'+
+        '<button type="button" class="rt-btn" title="Negrito" onmousedown="rtCmd(event,\'bold\')"><b>B</b></button>'+
+        '<button type="button" class="rt-btn" title="Itálico" onmousedown="rtCmd(event,\'italic\')"><i>I</i></button>'+
+        '<button type="button" class="rt-btn" title="Sublinhado" onmousedown="rtCmd(event,\'underline\')"><span style="text-decoration:underline">U</span></button>'+
+        '<button type="button" class="rt-btn" title="Tachado" onmousedown="rtCmd(event,\'strikeThrough\')"><span style="text-decoration:line-through">S</span></button>'+
+        '<button type="button" class="rt-btn" title="Lista" onmousedown="rtCmd(event,\'insertUnorderedList\')">•</button>'+
+        '<button type="button" class="rt-btn" title="Lista numerada" onmousedown="rtCmd(event,\'insertOrderedList\')">1.</button>'+
+        '<button type="button" class="rt-btn" title="Limpar formatação" onmousedown="rtCmd(event,\'removeFormat\')">✕</button>'+
+      '</div>'+
+      '<div class="rt-editor" id="lembObs" contenteditable="true" data-ph="Detalhes, contexto, links…">'+(lembDraft.observacoes||'')+'</div>'+
+    '</div>'+
   '</div>';
   let cl='<div class="checklist">'+
     '<div class="cl-head"><label>Checklist / etapas</label></div>'+
@@ -1459,11 +1478,20 @@ function toggleLembCl(i){lembDraftChecklist[i].done=!lembDraftChecklist[i].done;
 function editLembCl(i,v){lembDraftChecklist[i].text=v;}
 function delLembCl(i){lembDraftChecklist.splice(i,1);renderLembChecklist();}
 function closeLemb(){document.getElementById('lembOverlay').classList.remove('show');lembDraft=null;lembEditId=null;lembDraftChecklist=[];}
+// Editor de texto rico (Observações): aplica formatação na seleção atual
+function rtCmd(ev,cmd){
+  ev.preventDefault();                       // mantém o foco/seleção dentro do editor
+  document.execCommand(cmd,false,null);
+  const el=document.getElementById('lembObs');if(el)el.focus();
+}
+// converte HTML em texto puro (para exportações)
+function stripHtml(h){if(!h)return '';const d=document.createElement('div');d.innerHTML=h;return (d.textContent||'').replace(/ /g,' ').trim();}
 function saveLemb(){
   lembDraft.titulo=document.getElementById('lembTitulo').value.trim();
   lembDraft.responsavel=document.getElementById('lembResp').value;
   lembDraft.prazo=document.getElementById('lembPrazo').value||null;
-  lembDraft.observacoes=document.getElementById('lembObs').value.trim();
+  const _obsEl=document.getElementById('lembObs');
+  lembDraft.observacoes=(_obsEl.textContent||'').trim()?_obsEl.innerHTML:'';
   if(!lembDraft.titulo){toast('Descreva o que precisa ser feito.',true);return;}
   lembDraft.checklist=lembDraftChecklist.filter(c=>c.text.trim());
   if(lembEditId){
@@ -1867,7 +1895,7 @@ function exportExcel(){
   // Lembretes
   const shLemb=sheet('Lembretes',
     ['Título','Responsável','Prazo','Concluído','Observações','Etapas (checklist)'],
-    (DATA.lembretes||[]).map(l=>[l.titulo,l.responsavel,l.prazo,l.concluido?'sim':'não',l.observacoes,
+    (DATA.lembretes||[]).map(l=>[l.titulo,l.responsavel,l.prazo,l.concluido?'sim':'não',stripHtml(l.observacoes),
       (l.checklist||[]).map(c=>(c.done?'[x] ':'[ ] ')+c.text).join('; ')]));
 
   // Lançamentos
