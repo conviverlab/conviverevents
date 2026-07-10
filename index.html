@@ -827,7 +827,7 @@ function passDate(it){
 }
 
 function renderSummary(){
-  const items=DATA[current],box=document.getElementById('summary');
+  const items=DATA[current]||[],box=document.getElementById('summary');
   const total=items.length;
   const done=items.filter(i=>['realizado','pago','aprovado'].includes(i.status)).length;
   const dead=items.filter(i=>i.status==='cancelado'||i.status==='recusado').length;
@@ -851,7 +851,7 @@ function render(){
   const q=(document.getElementById('search').value||'').toLowerCase();
   board.innerHTML='';
   M.columns.forEach((col,i)=>{
-    let items=DATA[current].filter(it=>(it.status||M.columns[0])===col);
+    let items=(DATA[current]||[]).filter(it=>(it.status||M.columns[0])===col);
     if(current==='eventos')items.sort((a,b)=>(a.data_evento||'9999').localeCompare(b.data_evento||'9999'));
     if(q)items=items.filter(it=>JSON.stringify(it).toLowerCase().includes(q));
     if(filters.emp)items=items.filter(it=>it.empreendimento===filters.emp);
@@ -1376,8 +1376,8 @@ function delForn(){
 
 /* ---------- ORÇAMENTOS ---------- */
 function updateCounts(){
-  document.getElementById('cnt-eventos').textContent=DATA.eventos.length;
-  document.getElementById('cnt-lancamentos').textContent=DATA.lancamentos.length;
+  document.getElementById('cnt-eventos').textContent=(DATA.eventos||[]).length;
+  document.getElementById('cnt-lancamentos').textContent=(DATA.lancamentos||[]).length;
   const lc=document.getElementById('cnt-lembretes');if(lc)lc.textContent=(DATA.lembretes||[]).filter(l=>!l.concluido).length;
   const fc=document.getElementById('cnt-fornecedores');if(fc)fc.textContent=(DATA.fornecedores_cat||[]).length;
   const pg=document.getElementById('cnt-pagadoria');if(pg)pg.textContent=(DATA.pagadoria||[]).length;
