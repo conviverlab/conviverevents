@@ -1055,7 +1055,7 @@ function setSecForn(si,fi,v){draftOrc.secoes[si].fornecedores[fi]=v;}
 function setOrcSecao(si,k,v){draftOrc.secoes[si][k]=v;}
 function setOrcItem(si,ii,k,v){draftOrc.secoes[si].itens[ii][k]=v;}
 function setOrcPreco(si,ii,fi,v){draftOrc.secoes[si].itens[ii].precos[fi]=currencyToNumber(v);}
-function secAddForn(si){const se=draftOrc.secoes[si];se.fornecedores.push('');se.itens.forEach(it=>it.precos.push(null));renderOrcEditor();}
+function secAddForn(si){const se=draftOrc.secoes[si];if(se.fornecedores.length>=3){toast('Máximo de 3 fornecedores por seção.',true);return;}se.fornecedores.push('');se.itens.forEach(it=>it.precos.push(null));renderOrcEditor();}
 function secDelForn(si,fi){const se=draftOrc.secoes[si];se.fornecedores.splice(fi,1);se.itens.forEach(it=>it.precos.splice(fi,1));renderOrcEditor();}
 function orcAddSecao(){draftOrc.secoes.push(novaSecao());renderOrcEditor();}
 function orcDelSecao(si){if(!confirm('Remover esta seção e seus itens?'))return;draftOrc.secoes.splice(si,1);if(!draftOrc.secoes.length)draftOrc.secoes=[novaSecao()];renderOrcEditor();}
@@ -1086,7 +1086,7 @@ function renderOrcEditor(){
   html+='<p class="orc-hint">Cada seção tem seus próprios fornecedores (colunas). Edite o nome direto no cabeçalho da coluna.</p>';
   o.secoes.forEach((se,si)=>{
     const fns=se.fornecedores;
-    html+='<div class="orc-secao"><div class="orc-secao-head"><input class="orc-secao-nome" value="'+esc(se.nome||'')+'" placeholder="Nome da seção (ex.: Produção, Estrutura, Alimentação)" oninput="setOrcSecao('+si+',\'nome\',this.value)"><div class="orc-secao-actions"><button class="cl-mini" onclick="secAddForn('+si+')">+ fornecedor</button><button class="cl-mini danger" onclick="orcDelSecao('+si+')">remover seção</button></div></div>';
+    html+='<div class="orc-secao"><div class="orc-secao-head"><input class="orc-secao-nome" value="'+esc(se.nome||'')+'" placeholder="Nome da seção (ex.: Produção, Estrutura, Alimentação)" oninput="setOrcSecao('+si+',\'nome\',this.value)"><div class="orc-secao-actions">'+(fns.length<3?'<button class="cl-mini" onclick="secAddForn('+si+')">+ fornecedor</button>':'')+'<button class="cl-mini danger" onclick="orcDelSecao('+si+')">remover seção</button></div></div>';
     html+='<div class="orc-grid-wrap"><table class="orc-grid"><thead><tr><th style="width:32%">Item</th><th style="width:9%">Unid</th>'+
       fns.map((f,fi)=>'<th><div class="orc-colh"><input value="'+esc(f||'')+'" placeholder="Fornecedor '+(fi+1)+'" oninput="setSecForn('+si+','+fi+',this.value)" onchange="renderOrcEditor()">'+(fns.length>1?'<button class="colh-del" title="Remover coluna" onclick="secDelForn('+si+','+fi+')">✕</button>':'')+'</div></th>').join('')+
       '<th style="width:24px"></th></tr></thead><tbody>';
