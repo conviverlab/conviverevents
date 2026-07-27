@@ -327,6 +327,12 @@ html[data-theme="dark"] .cal-cell.today .cal-day{color:var(--accent)}
 .cl-row.done .cl-txt{text-decoration:line-through;color:var(--ink-dim)}
 .cl-row .cl-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:0 4px}
 .cl-row .cl-del:hover{color:var(--red)}
+.forn-row{display:grid;grid-template-columns:150px 1fr 150px 150px 26px;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.forn-row select,.forn-row input{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-family:inherit;font-size:12.5px;min-width:0}
+.forn-row select:focus,.forn-row input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.forn-row .cl-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:0}
+.forn-row .cl-del:hover{color:var(--red)}
+@media(max-width:640px){.forn-row{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.forn-row .cl-del{grid-column:2;justify-self:end}}
 .cl-add{display:flex;gap:8px}
 .cl-add input{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink);font-family:inherit;font-size:13px}
 .cl-add input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
@@ -386,15 +392,6 @@ body.pre-auth #sidebar,body.pre-auth main{display:none}
     <button class="nav-item" data-tab="lembretes" onclick="switchTab('lembretes')">
       <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       Lembretes <span class="badge" id="cnt-lembretes">0</span></button>
-    <button class="nav-item" data-tab="lancamentos" onclick="switchTab('lancamentos')">
-      <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
-      Lançamentos <span class="badge" id="cnt-lancamentos">0</span></button>
-    <button class="nav-item" data-tab="pagadoria" onclick="switchTab('pagadoria')">
-      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l3-3 3 2 5-5"/><circle cx="7" cy="15" r="0.6"/></svg>
-      Pagadoria <span class="badge" id="cnt-pagadoria">0</span></button>
-    <button class="nav-item" data-tab="fornecedores" onclick="switchTab('fornecedores')">
-      <svg viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-      Fornecedores <span class="badge" id="cnt-fornecedores">0</span></button>
     <div class="nav-sep"></div>
     <button class="nav-item" data-tab="config" onclick="switchTab('config')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
@@ -425,7 +422,7 @@ body.pre-auth #sidebar,body.pre-auth main{display:none}
     <div class="tools" id="headTools">
       <div class="savetag"><span class="dot" id="saveDot"></span><span id="saveTxt">salvo no navegador</span></div>
       <button class="btn" id="refreshBtn" onclick="refreshData()" title="Buscar dados mais recentes do servidor">⟲ Atualizar</button>
-      <input class="search" id="search" placeholder="Buscar…" oninput="render()">
+      <input class="search" id="search" placeholder="Buscar…" oninput="onSearch()">
       <button class="btn btn-primary" id="newBtn" onclick="onNew()">+ Novo</button>
     </div>
   </div>
@@ -440,32 +437,7 @@ body.pre-auth #sidebar,body.pre-auth main{display:none}
   <div class="settings" id="settings" style="display:none"></div>
   <div class="calwrap" id="calwrap" style="display:none"></div>
   <div class="lembwrap" id="lembwrap" style="display:none"></div>
-  <div class="fornwrap" id="fornwrap" style="display:none"></div>
-  <div class="pagwrap" id="pagwrap" style="display:none"></div>
-  <input type="file" id="pagFile" accept=".xlsx" style="display:none" onchange="importPagadoria(event)">
 </main>
-<div class="overlay" id="fornOverlay">
-  <div class="modal">
-    <div class="modal-head"><h2 id="fornModalTitle">Novo fornecedor</h2><button class="x" onclick="closeForn()">✕</button></div>
-    <div class="modal-body" id="fornModalBody"></div>
-    <div class="modal-foot">
-      <button class="btn btn-danger" id="fornDelBtn" onclick="delForn()" style="display:none">Excluir</button>
-      <div class="right"><button class="btn btn-ghost" onclick="closeForn()">Cancelar</button>
-        <button class="btn btn-primary" onclick="saveForn()">Salvar fornecedor</button></div>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="envioOverlay">
-  <div class="modal" style="max-width:920px">
-    <div class="modal-head"><h2>Gerar planilha de envio</h2><button class="x" onclick="closeEnvio()">✕</button></div>
-    <div class="modal-body" id="envioBody"></div>
-    <div class="modal-foot">
-      <div class="right"><button class="btn btn-ghost" onclick="closeEnvio()">Cancelar</button>
-        <button class="btn btn-primary" onclick="exportEnvio()">📤 Baixar planilha (.xls)</button></div>
-    </div>
-  </div>
-</div>
 <div class="overlay" id="lembOverlay">
   <div class="modal">
     <div class="modal-head"><h2 id="lembModalTitle">Novo lembrete</h2><button class="x" onclick="closeLemb()">✕</button></div>
@@ -496,7 +468,7 @@ const SB_URL='https://pgiiezcjuwxwekjasteg.supabase.co';
 const SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBnaWllemNqdXd4d2VramFzdGVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MzMwMDcsImV4cCI6MjA5NzMwOTAwN30.Xj7rHoutvHpmX9jpgGX-3fkDzn5EGgJv0B7CdlFP-9k';
 const sb=window.supabase.createClient(SB_URL,SB_ANON);
 // mapeamento coleção JSON -> tabela Supabase
-const SB_TABLES={eventos:'eventos',lembretes:'lembretes',lancamentos:'lancamentos',empreendimentos:'empreendimentos',coligadas:'coligadas',responsaveis:'responsaveis',fornecedores_cat:'fornecedores',tipos_servico:'tipos_servico',pagadoria:'pagadoria'};
+const SB_TABLES={eventos:'eventos',lembretes:'lembretes',empreendimentos:'empreendimentos',coligadas:'coligadas',responsaveis:'responsaveis',tipos_servico:'tipos_servico'};
 </script>
 <script>
 const PALETTE=['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#0ea5e9','#f97316','#64748b'];
@@ -542,9 +514,10 @@ const SEED_EMPS=[
   {id:'emp-litoral',nome:'Conviver do Litoral Residence',cidade:'Parnaíba',estado:'Piauí',coligada:'18',coligada_id:'col-18',cor:'#22c55e'},
   {id:'emp-inst',nome:'Conviver / Institucional',cidade:'Fortaleza',estado:'Ceará',coligada:'30',coligada_id:'col-30',cor:'#8b5cf6'},
 ];
-let DATA={eventos:[],lembretes:[],lancamentos:[],empreendimentos:[],coligadas:[],responsaveis:[],fornecedores_cat:[],checklist_models:[],tipos_servico:[],pagadoria:[],pag_extras:{}};
+let DATA={eventos:[],lembretes:[],empreendimentos:[],coligadas:[],responsaveis:[],checklist_models:[],tipos_servico:[]};
 let current='eventos', editingId=null, dragId=null, canPersist=true;
 let draftChecklist=[];
+let draftFornecedores=[];
 let filters={emp:'',cidade:'',dateMode:'',dateExact:''};
 let calRef=new Date();calRef.setDate(1);
 
@@ -560,20 +533,6 @@ const MODULES={
     fields:[{k:'nome',l:'Nome do evento',t:'text',full:true,req:true},{k:'empreendimento',l:'Empreendimento',t:'emp'},
       {k:'data_evento',l:'Data do evento',t:'date'},{k:'hora_inicio',l:'Hora início',t:'time'},{k:'hora_fim',l:'Hora término',t:'time'},{k:'prioridade',l:'Prioridade',t:'prior'},
       {k:'responsavel',l:'Responsável',t:'resp'},{k:'status',l:'Status',t:'status'},
-      {k:'observacoes',l:'Observações',t:'textarea',full:true}]},
-  lancamentos:{title:'Lançamentos',sub:'Pagamentos a lançar e em andamento — arraste para mudar o status',titleKey:'titulo',hasModel:true,
-    columns:['rascunho','aguardando_aprovacao','enviado_pagadoria','aguardando_confirmacao','pago','cancelado'],
-    colLabels:{rascunho:'A lançar',aguardando_aprovacao:'Aguardando aprovação',enviado_pagadoria:'Enviado p/ pagadoria',aguardando_confirmacao:'Aguardando confirmação',pago:'Pago',cancelado:'Cancelado'},
-    fields:[{k:'titulo',l:'Título do lançamento',t:'text',full:true,req:true},{k:'evento_id',l:'Evento vinculado',t:'evento'},
-      {k:'categoria',l:'Categoria (se avulso)',t:'cat'},{k:'fornecedor',l:'Fornecedor / pessoa',t:'text'},{k:'cnpj',l:'CNPJ / CPF do fornecedor',t:'text'},
-      {k:'forn_cidade',l:'Cidade do fornecedor',t:'text'},{k:'forn_estado',l:'Estado do fornecedor',t:'text'},
-      {k:'endereco',l:'Endereço completo do fornecedor',t:'text',full:true},
-      {k:'banco',l:'Banco',t:'text'},{k:'agencia',l:'Agência',t:'text'},{k:'conta',l:'Conta',t:'text'},{k:'pix',l:'PIX',t:'text'},
-      {k:'valor',l:'Valor total (R$)',t:'currency'},
-      {k:'forma_pagamento',l:'Forma de pagamento',t:'forma'},{k:'empreendimento',l:'Empreendimento',t:'emp'},
-      {k:'prioridade',l:'Prioridade',t:'prior'},{k:'responsavel',l:'Responsável',t:'resp'},
-      {k:'data_solicitacao',l:'Data da solicitação',t:'date'},{k:'data_limite',l:'Data limite',t:'date'},
-      {k:'status',l:'Status',t:'status'},
       {k:'observacoes',l:'Observações',t:'textarea',full:true}]}
 };
 const CATS=['Ações diversas','Material gráfico','Impressão','Demanda institucional','Demanda administrativa','Campanha','Brinde','Estrutura','Outros'];
@@ -665,12 +624,8 @@ const SB_COLS={
   empreendimentos:['id','nome','cidade','estado','cor','coligada_id','coligada','ordem'],
   responsaveis:['id','nome'],
   tipos_servico:['id','nome','cor'],
-  fornecedores:['id','nome','cnpj','cnpj_norm','cidade','estado','responsavel','telefone','email','tipos'],
-  eventos:['id','nome','empreendimento','data_evento','hora_inicio','hora_fim','prioridade','responsavel','status','observacoes','checklist'],
-  lembretes:['id','titulo','responsavel','prazo','concluido','checklist','observacoes','ordem'],
-  lancamentos:['id','titulo','empreendimento','evento_id','fornecedor','cnpj','cnpj_norm','forn_cidade','forn_estado','telefone','email','categoria','valor','forma_pagamento','parcela_atual','total_parcelas','data_limite','prioridade','responsavel','status','observacoes','checklist','oc','atividade','nf','link_nf','bx_adiantamento','data_solicitacao','endereco','banco','agencia','conta','pix'],
-  pagadoria:['oc','atividade','usuario','data','status_atend','status_mov','coligada','empreendimento','fornecedor','cnpj','historico','dados_pgto','responsavel','valor'],
-  pagadoria_marcacoes:['oc','marca','obs','data_prog']
+  eventos:['id','nome','empreendimento','data_evento','hora_inicio','hora_fim','prioridade','responsavel','status','observacoes','checklist','fornecedores'],
+  lembretes:['id','titulo','responsavel','prazo','concluido','checklist','observacoes','ordem']
 };
 function cleanRow(table,row){
   const cols=SB_COLS[table];const out={};
@@ -711,19 +666,8 @@ async function syncAll(){
   await upsertColl('empreendimentos',DATA.empreendimentos,'id');
   await upsertColl('responsaveis',DATA.responsaveis,'id');
   await upsertColl('tipos_servico',DATA.tipos_servico,'id');
-  await upsertColl('fornecedores',DATA.fornecedores_cat,'id');
   await upsertColl('eventos',DATA.eventos,'id');
   await upsertColl('lembretes',DATA.lembretes,'id');
-  await upsertColl('lancamentos',DATA.lancamentos,'id');
-  await upsertColl('pagadoria',DATA.pagadoria,'oc');
-  // marcações: converte o objeto pag_extras em linhas por OC
-  const marcRows=Object.keys(DATA.pag_extras||{}).map(oc=>({
-    oc:oc,
-    marca:(DATA.pag_extras[oc].marca||''),
-    obs:(DATA.pag_extras[oc].obs||''),
-    data_prog:(DATA.pag_extras[oc].data_prog||'')
-  })).filter(r=>r.marca||r.obs||r.data_prog);  // só guarda marcações com conteúdo
-  await upsertColl('pagadoria_marcacoes',marcRows,'oc');
 }
 function toggleSidebar(){
   const collapsed=document.getElementById('sidebar').classList.toggle('collapsed');
@@ -747,9 +691,8 @@ function loadStore(){
     localStorage.setItem('conviver-test','1');localStorage.removeItem('conviver-test');
     canPersist=true;setSave(true);
   }catch(e){canPersist=false;setSave(false);document.getElementById('warnBanner').classList.add('show');}
-  ['eventos','lembretes','lancamentos','empreendimentos','coligadas','responsaveis','fornecedores_cat','checklist_models','tipos_servico','pagadoria'].forEach(k=>{if(!Array.isArray(DATA[k]))DATA[k]=[];});
+  ['eventos','lembretes','empreendimentos','coligadas','responsaveis','checklist_models','tipos_servico'].forEach(k=>{if(!Array.isArray(DATA[k]))DATA[k]=[];});
   if(!DATA.tipos_servico.length)DATA.tipos_servico=JSON.parse(JSON.stringify(SEED_TIPOS));
-  if(!DATA.pag_extras||typeof DATA.pag_extras!=='object'||Array.isArray(DATA.pag_extras))DATA.pag_extras={};
   if(!DATA.empreendimentos.length)DATA.empreendimentos=JSON.parse(JSON.stringify(SEED_EMPS));
   if(!DATA.coligadas.length)DATA.coligadas=JSON.parse(JSON.stringify(SEED_COLIGADAS));
   // migração: vincular empreendimento à coligada por número, quando faltar coligada_id
@@ -760,16 +703,14 @@ function loadStore(){
 
 function switchTab(t){current=t;
   document.querySelectorAll('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  const isConfig=t==='config', isCal=t==='calendario', isLemb=t==='lembretes', isForn=t==='fornecedores', isPag=t==='pagadoria', isBoard=!isConfig&&!isCal&&!isLemb&&!isForn&&!isPag;
+  const isConfig=t==='config', isCal=t==='calendario', isLemb=t==='lembretes', isBoard=!isConfig&&!isCal&&!isLemb;
   document.getElementById('settings').style.display=isConfig?'block':'none';
   document.getElementById('calwrap').style.display=isCal?'block':'none';
   document.getElementById('lembwrap').style.display=isLemb?'block':'none';
-  document.getElementById('fornwrap').style.display=isForn?'block':'none';
-  document.getElementById('pagwrap').style.display=isPag?'block':'none';
   document.getElementById('board').parentElement.style.display=isBoard?'block':'none';
   document.getElementById('summary').style.display=isBoard?'grid':'none';
   document.getElementById('filterbar').style.display=isBoard?'flex':'none';
-  document.getElementById('headTools').style.display=(isBoard||isLemb||isForn)?'flex':'none';
+  document.getElementById('headTools').style.display=(isBoard||isLemb)?'flex':'none';
   if(isConfig){document.getElementById('boardTitle').textContent='Configurações';
     document.getElementById('boardSub').textContent='Cadastre os empreendimentos: nome, cidade, coligada e cor';
     renderSettings();return;}
@@ -779,12 +720,6 @@ function switchTab(t){current=t;
   if(isLemb){document.getElementById('boardTitle').textContent='Lembretes';
     document.getElementById('boardSub').textContent='To-do list — o que você e o time precisam fazer';
     document.getElementById('search').value='';renderLemb();return;}
-  if(isForn){document.getElementById('boardTitle').textContent='Fornecedores';
-    document.getElementById('boardSub').textContent='Catálogo de fornecedores para consulta e uso nos lançamentos';
-    document.getElementById('search').value='';renderForn();return;}
-  if(isPag){document.getElementById('boardTitle').textContent='Pagadoria';
-    document.getElementById('boardSub').textContent='Status oficial dos pagamentos — suba a planilha do dia';
-    renderPagadoria();return;}
   document.getElementById('boardTitle').textContent=MODULES[t].title;
   document.getElementById('boardSub').textContent=MODULES[t].sub;
   document.getElementById('search').value='';
@@ -812,6 +747,10 @@ function renderFilterBar(){
 function setDateMode(m){filters.dateMode=filters.dateMode===m?'':m;filters.dateExact='';render();}
 function setDateExact(v){filters.dateExact=v;filters.dateMode='';render();}
 function clearFilters(){filters={emp:'',cidade:'',dateMode:'',dateExact:''};document.getElementById('search').value='';render();}
+function onSearch(){                  // o campo de busca é compartilhado entre as abas
+  if(current==='lembretes')renderLemb();
+  else render();
+}
 function itemDate(it){return it.data_evento||it.data_limite||it.data_ref||'';}
 function passDate(it){
   const d=itemDate(it);
@@ -833,10 +772,7 @@ function renderSummary(){
   const dead=items.filter(i=>i.status==='cancelado'||i.status==='recusado').length;
   const open=total-done-dead;
   const late=items.filter(i=>isLate(itemDate(i),i.status)).length;
-  let last;
-  if(current==='eventos') last={lbl:'Concluídos',val:done,sub:'já realizados',cls:''};
-  else{const v=items.filter(i=>i.status!=='cancelado'&&i.status!=='recusado').reduce((s,i)=>s+(Number(i.valor)||0),0);
-    last={lbl:current==='orcamentos'?'Valor em cotação':'Valor a pagar',val:'R$ '+fmtMoney(v),sub:'soma dos itens ativos',cls:'warn'};}
+  const last={lbl:'Concluídos',val:done,sub:'já realizados',cls:''};
   const cards=[
     {lbl:'Total',val:total,sub:MODULES[current].title.toLowerCase(),cls:''},
     {lbl:'Em aberto',val:open<0?0:open,sub:'precisam de ação',cls:'accent'},
@@ -845,6 +781,7 @@ function renderSummary(){
   box.innerHTML=cards.map(c=>'<div class="scard '+c.cls+'"><div class="lbl">'+c.lbl+'</div><div class="val">'+c.val+'</div><div class="sub">'+c.sub+'</div></div>').join('');
 }
 function render(){
+  if(!MODULES[current])return;   // só as abas de quadro (eventos/lançamentos) usam render()
   updateCounts();
   renderFilterBar();renderSummary();
   const M=MODULES[current],board=document.getElementById('board');
@@ -896,11 +833,8 @@ function cardEl(it){
   if(it.empreendimento)chips+='<span class="chip"><span class="cdot" style="background:'+empColor(it.empreendimento)+'"></span>'+esc(it.empreendimento)+'</span>';
   const city=empCity(it.empreendimento);
   if(city)chips+='<span class="chip city">📍 '+esc(city)+'</span>';
-  if(current==='lancamentos'){const colg=empColigada(it.empreendimento);if(colg)chips+='<span class="chip">🏢 '+esc(colg)+'</span>';}
-  if(it.valor)chips+='<span class="chip val">R$ '+fmtMoney(it.valor)+'</span>';
-  if(it.categoria)chips+='<span class="chip">'+esc(it.categoria)+'</span>';
-  if(it.evento_id){const ev=DATA.eventos.find(e=>e.id===it.evento_id);if(ev)chips+='<span class="chip evt">📅 '+esc(ev.nome)+'</span>';}
-  if(it.total_parcelas)chips+='<span class="chip">'+(it.parcela_atual||1)+'/'+it.total_parcelas+'</span>';
+  const forn=Array.isArray(it.fornecedores)?it.fornecedores.filter(f=>f&&(f.nome||f.cnpj)):[];
+  if(forn.length)chips+='<span class="chip">🤝 '+forn.length+' fornecedor'+(forn.length>1?'es':'')+'</span>';
   const cl=it.checklist||[];const doneN=cl.filter(c=>c.done).length;
   if(cl.length)chips+='<span class="chip todo'+(doneN===cl.length?' done':'')+'">✓ '+doneN+'/'+cl.length+'</span>';
   const dateField=itemDate(it);const late=isLate(dateField,it.status);
@@ -936,454 +870,13 @@ function duplicateItem(id){
   persist();render();toast('Card duplicado ✓');
 }
 
-/* ---------- PAGADORIA ---------- */
-// Leitor XLSX mínimo, 100% offline (usa DecompressionStream nativo)
-async function xlsxInflate(bytes){
-  const ds=new DecompressionStream('deflate-raw');
-  const w=ds.writable.getWriter();w.write(bytes);w.close();
-  const ab=await new Response(ds.readable).arrayBuffer();return new Uint8Array(ab);
-}
-function xlsxU16(d,o){return d[o]|(d[o+1]<<8);}
-function xlsxU32(d,o){return (d[o]|(d[o+1]<<8)|(d[o+2]<<16)|(d[o+3]<<24))>>>0;}
-async function xlsxReadZip(buf){
-  const d=new Uint8Array(buf);const files={};
-  let i=d.length-22;while(i>=0 && xlsxU32(d,i)!==0x06054b50)i--;
-  if(i<0)throw new Error('zip inválido');
-  const cdOff=xlsxU32(d,i+16),cdCnt=xlsxU16(d,i+10);let p=cdOff;
-  for(let n=0;n<cdCnt;n++){
-    if(xlsxU32(d,p)!==0x02014b50)break;
-    const method=xlsxU16(d,p+10),nameLen=xlsxU16(d,p+28),extraLen=xlsxU16(d,p+30),commLen=xlsxU16(d,p+32);
-    const lho=xlsxU32(d,p+42),compSize=xlsxU32(d,p+20);
-    const name=new TextDecoder().decode(d.slice(p+46,p+46+nameLen));
-    const lNameLen=xlsxU16(d,lho+26),lExtraLen=xlsxU16(d,lho+28);
-    const dataStart=lho+30+lNameLen+lExtraLen;
-    const raw=d.slice(dataStart,dataStart+compSize);
-    files[name]= method===0?raw:await xlsxInflate(raw);
-    p+=46+nameLen+extraLen+commLen;
-  }
-  return files;
-}
-function xlsxDec(u8){return new TextDecoder('utf-8').decode(u8);}
-function xlsxParseShared(xml){const out=[];const re=/<si>([\s\S]*?)<\/si>/g;let m;
-  while((m=re.exec(xml))){const ts=[...m[1].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]);
-    out.push(ts.join('').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#10;/g,'\n').replace(/&#39;/g,"'"));}
-  return out;}
-function xlsxColNum(ref){let c=0;for(const ch of ref){const u=ch.charCodeAt(0);if(u>=65&&u<=90)c=c*26+(u-64);else break;}return c-1;}
-function xlsxParseSheet(xml,shared){const rows=[];const rowRe=/<row[^>]*>([\s\S]*?)<\/row>/g;let rm;
-  while((rm=rowRe.exec(xml))){const cells=[];
-    const cRe=/<c\b([^>]*)>(?:<v>([\s\S]*?)<\/v>|<is>([\s\S]*?)<\/is>)?<\/c>/g;let cm;
-    while((cm=cRe.exec(rm[1]))){
-      const attrs=cm[1]||'';
-      const rMatch=attrs.match(/r="([A-Z]+)\d+"/);if(!rMatch)continue;
-      const tMatch=attrs.match(/t="([^"]+)"/);
-      const col=xlsxColNum(rMatch[1]),t=tMatch?tMatch[1]:null,val=cm[2];
-      let out;
-      if(cm[3]!=null){const it=[...cm[3].matchAll(/<t[^>]*>([\s\S]*?)<\/t>/g)].map(x=>x[1]).join('');out=it.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#10;/g,'\n').replace(/&#39;/g,"'");}
-      else if(val==null)out=null;
-      else if(t==='s')out=shared[parseInt(val,10)];
-      else out=val;
-      cells[col]=out;}
-    rows.push(cells);}
-  return rows;}
-function xlsxSerialToDate(n){const v=Number(n);if(isNaN(v))return n;
-  const d=new Date(Date.UTC(1899,11,30)+v*86400000);return d.toISOString().slice(0,10);}
-
-function importPagadoria(ev){
-  const file=ev.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=async()=>{
-    try{
-      const files=await xlsxReadZip(r.result);
-      const shared= files['xl/sharedStrings.xml']?xlsxParseShared(xlsxDec(files['xl/sharedStrings.xml'])):[];
-      let sheetKey=Object.keys(files).find(k=>/xl\/worksheets\/sheet1\.xml$/.test(k))||Object.keys(files).find(k=>/xl\/worksheets\/.*\.xml$/.test(k));
-      const rows=xlsxParseSheet(xlsxDec(files[sheetKey]),shared);
-      if(rows.length<2){toast('Planilha vazia ou ilegível.',true);ev.target.value='';return;}
-      const hdr=rows[0].map(h=>(h||'').toString().trim());
-      const col=name=>hdr.indexOf(name);
-      const ci={
-        usuario:col('USUA. CRIAÇÃO'),data:col('DATA LANCAMENTO'),atend:col('STATUS ATENDIMENTO'),
-        mov:col('STATUS MOVIMENTO'),colig:col('COLIGADA'),emp:col('EMPREENDIMENTO'),
-        atividade:col('ATENDIMENTO'),forn:col('FORNECEDOR'),cnpj:col('CPF/CNPJ'),oc:col('ORD. COMPRA'),hist:col('HISTORICO'),
-        dados:col('DADOS_PGTO'),resp:col('ATEND. RESP.'),valor:col('VALOR ORIGINAL Total')
-      };
-      if(ci.oc<0){toast('Não achei a coluna ORD. COMPRA na planilha.',true);ev.target.value='';return;}
-      const existentes={};(DATA.pagadoria||[]).forEach(p=>existentes[p.oc]=p);
-      let novos=0,atualizados=0;
-      rows.slice(1).forEach(row=>{
-        if(!row||!row.length)return;
-        const oc=(row[ci.oc]||'').toString().trim();if(!oc)return;
-        const reg={
-          oc:oc,
-          atividade:ci.atividade>=0?(row[ci.atividade]||'').toString().trim():'',
-          usuario:row[ci.usuario]||'',
-          data:ci.data>=0?xlsxSerialToDate(row[ci.data]):'',
-          status_atend:row[ci.atend]||'',
-          status_mov:row[ci.mov]||'',
-          coligada:row[ci.colig]||'',
-          empreendimento:row[ci.emp]||'',
-          fornecedor:row[ci.forn]||'',
-          cnpj:ci.cnpj>=0?(row[ci.cnpj]||'').toString().trim():'',
-          historico:row[ci.hist]||'',
-          dados_pgto:row[ci.dados]||'',
-          responsavel:(row[ci.resp]||'').toString().trim(),
-          valor:Number(row[ci.valor])||0
-        };
-        if(existentes[oc]){Object.assign(existentes[oc],reg);atualizados++;}
-        else{DATA.pagadoria.push(reg);existentes[oc]=reg;novos++;}
-        // automação: se virou Recebido, limpa a marcação e a data (mantém a observação)
-        const ex=DATA.pag_extras[oc];
-        if(ex && ex.marca && /receb/i.test(reg.status_mov||'') && !/parc/i.test(reg.status_mov||'')){
-          ex.marca='';ex.data_prog='';
-        }
-      });
-      persist();renderPagadoria();
-      toast('Planilha importada: '+novos+' novos, '+atualizados+' atualizados ✓');
-    }catch(e){console.error(e);toast('Erro ao ler a planilha. Confira se é o .xlsx correto.',true);}
-    ev.target.value='';
-  };
-  r.readAsArrayBuffer(file);
-}
-
-let pagFilters={emp:'',forn:'',mov:'',resp:'',busca:''};
-function renderPagadoria(){
-  updateCounts();
-  const box=document.getElementById('pagwrap');
-  const todos=DATA.pagadoria||[];
-  const upload='<div class="pag-upload"><div class="pu-txt"><b>Atualizar status dos pagamentos</b>'+
-    '<span>Suba a planilha .xlsx baixada do sistema. Os lançamentos são atualizados pela Ordem de Compra (mantém histórico).</span></div>'+
-    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-    '<button class="btn" onclick="openEnvio()">📤 Gerar planilha de envio</button>'+
-    '<button class="btn btn-primary" onclick="document.getElementById(\'pagFile\').click()">⬆ Subir planilha</button></div></div>';
-  if(!todos.length){box.innerHTML=upload+'<div class="oc-empty">Nenhum dado ainda. Suba a planilha do dia para começar.</div>';return;}
-
-  const norm=s=>(s||'').toString().toLowerCase();
-  function movClass(m){const x=norm(m);if(x.includes('pend'))return'pend';if(x.includes('parc'))return'parc';if(x.includes('receb'))return'receb';return'';}
-  // status de atendimento: "Em Atendimento" = falta aprovação (olhar ATEND. RESP.); "Concluído Confirmado" = aprovado
-  function aguardandoAprovacao(p){const x=norm(p.status_atend);return x.includes('atendimento') && !x.includes('conclu');}
-  // estágio de pendência: 1) aguardando aprovação  2) aprovado mas pendente de movimento
-  function pendKind(p){
-    if(aguardandoAprovacao(p))return'aprov';
-    if(movClass(p.status_mov)==='pend')return'mov';
-    return'';
-  }
-
-  // opções de filtro (a partir de TODOS os dados)
-  const emps=[...new Set(todos.map(p=>p.empreendimento).filter(Boolean))].sort();
-  const forns=[...new Set(todos.map(p=>p.fornecedor).filter(Boolean))].sort();
-  const movs=[...new Set(todos.map(p=>p.status_mov).filter(Boolean))].sort();
-  const resps=[...new Set(todos.map(p=>(p.responsavel||'').trim()).filter(Boolean))].sort();
-
-  // aplica filtros
-  let lista=todos.slice();
-  if(pagFilters.emp)lista=lista.filter(p=>p.empreendimento===pagFilters.emp);
-  if(pagFilters.forn)lista=lista.filter(p=>p.fornecedor===pagFilters.forn);
-  if(pagFilters.mov)lista=lista.filter(p=>p.status_mov===pagFilters.mov);
-  if(pagFilters.resp)lista=lista.filter(p=>(p.responsavel||'').trim()===pagFilters.resp);
-  if(pagFilters.busca){const q=norm(pagFilters.busca);lista=lista.filter(p=>norm(p.historico+' '+p.fornecedor+' '+p.oc).includes(q));}
-
-  const fbar='<div class="filterbar" style="padding:0 0 18px">'+
-    '<input class="search" style="width:200px" placeholder="Buscar descrição, fornecedor, OC…" value="'+esc(pagFilters.busca)+'" oninput="pagFilters.busca=this.value;renderPagadoria()">'+
-    '<select class="fsel" onchange="pagFilters.emp=this.value;renderPagadoria()"><option value="">Todos empreend.</option>'+emps.map(e=>'<option '+(pagFilters.emp===e?'selected':'')+'>'+esc(e)+'</option>').join('')+'</select>'+
-    '<select class="fsel" onchange="pagFilters.forn=this.value;renderPagadoria()"><option value="">Todos fornecedores</option>'+forns.map(e=>'<option '+(pagFilters.forn===e?'selected':'')+'>'+esc(e)+'</option>').join('')+'</select>'+
-    '<select class="fsel" onchange="pagFilters.mov=this.value;renderPagadoria()"><option value="">Todos status</option>'+movs.map(e=>'<option '+(pagFilters.mov===e?'selected':'')+'>'+esc(e)+'</option>').join('')+'</select>'+
-    '<select class="fsel" onchange="pagFilters.resp=this.value;renderPagadoria()"><option value="">Todos responsáveis</option>'+resps.map(e=>'<option '+(pagFilters.resp===e?'selected':'')+'>'+esc(e)+'</option>').join('')+'</select>'+
-    ((pagFilters.emp||pagFilters.forn||pagFilters.mov||pagFilters.resp||pagFilters.busca)?'<span class="fclear" onclick="clearPagFilters()">limpar filtros</span>':'')+
-  '</div>';
-
-  // resumo (sobre a lista filtrada) — dois tipos de pendência
-  const aguardando=lista.filter(p=>pendKind(p)==='aprov');
-  const pendMov=lista.filter(p=>pendKind(p)==='mov');
-  const receb=lista.filter(p=>!pendKind(p) && movClass(p.status_mov)==='receb');
-  const valAprov=aguardando.reduce((s,p)=>s+(p.valor||0),0);
-  const valMov=pendMov.reduce((s,p)=>s+(p.valor||0),0);
-  const cards='<div class="cards" style="padding:0 0 22px">'+
-    '<div class="scard warn"><div class="lbl">Aguardando aprovação</div><div class="val">'+aguardando.length+'</div><div class="sub">⏳ falta alguém aprovar · R$ '+fmtMoney(valAprov)+'</div></div>'+
-    '<div class="scard danger"><div class="lbl">Pendente de movimento</div><div class="val">'+pendMov.length+'</div><div class="sub">⚠ você precisa lançar na pagadoria · R$ '+fmtMoney(valMov)+'</div></div>'+
-    '<div class="scard accent"><div class="lbl">Recebidos</div><div class="val">'+receb.length+'</div><div class="sub">já movimentados</div></div>'+
-    '<div class="scard"><div class="lbl">Exibindo</div><div class="val">'+lista.length+'</div><div class="sub">de '+todos.length+' lançamentos</div></div>'+
-  '</div>';
-
-  if(!lista.length){box.innerHTML=upload+fbar+'<div class="oc-empty">Nenhum lançamento encontrado com esses filtros.</div>';return;}
-
-  // agrupar por empreendimento, pendentes primeiro
-  const grupos={};
-  lista.forEach(p=>{const k=p.empreendimento||'(sem empreendimento)';(grupos[k]=grupos[k]||[]).push(p);});
-  const empColorByPag=nome=>{
-    const n=norm(nome);
-    const e=(DATA.empreendimentos||[]).find(x=>{const xn=norm(x.nome);return xn.includes(n)||n.includes(norm(x.cidade))||xn.replace('conviver ','').replace('do ','').includes(n.replace(' ',''));});
-    return e?e.cor:'var(--ink-dim)';
-  };
-  let body='';
-  Object.keys(grupos).sort().forEach(emp=>{
-    const items=grupos[emp].slice().sort((a,b)=>{
-      const order=x=>{const k=pendKind(x);return k==='aprov'?0:k==='mov'?1:2;};
-      return order(a)-order(b);
-    });
-    const gval=items.reduce((s,p)=>s+(p.valor||0),0);
-    const gAprov=items.filter(p=>pendKind(p)==='aprov').length;
-    const gMov=items.filter(p=>pendKind(p)==='mov').length;
-    const gtags=[gAprov?gAprov+' aguardando':'',gMov?gMov+' a movimentar':''].filter(Boolean).join(' · ');
-    body+='<div class="pag-grp"><div class="pag-grp-head"><span class="gswatch" style="background:'+empColorByPag(emp)+'"></span>'+
-      '<h3>'+esc(emp)+'</h3><span class="gcount">'+items.length+(gtags?' · '+gtags:'')+'</span>'+
-      '<span class="gval">R$ '+fmtMoney(gval)+'</span></div>';
-    items.forEach(p=>{
-      const kind=pendKind(p);
-      const mc=movClass(p.status_mov);
-      const ex=DATA.pag_extras[p.oc]||{};
-      const marca=ex.marca||'';
-      // cor da borda: laranja=aguardando aprovação, vermelho=pendente movimento, verde=recebido
-      const rowClass = kind==='aprov'?'aprov' : kind==='mov'?'pend' : mc;
-      // marcação manual colore o card inteiro
-      const marcaClass = marca==='atencao'?'marca-atencao' : marca==='cancelar'?'marca-cancelar' : marca==='programado'?'marca-programado' : '';
-      const badge = kind==='aprov'
-        ? '<span class="pag-badge aprov">Aguardando aprovação</span>'
-        : '<span class="pag-badge '+mc+'">'+esc(p.status_mov||'—')+'</span>';
-      const respHtml=(kind==='aprov'&&p.responsavel)?'<div class="pag-resp">aguardando: <b>'+esc(p.responsavel)+'</b></div>':'';
-      const marcaTag = marca==='atencao'?'<span class="pag-marca-tag atencao">⚠ Requer atenção</span>'
-        : marca==='cancelar'?'<span class="pag-marca-tag cancelar">✕ Solicitar cancelamento</span>'
-        : marca==='programado'?'<span class="pag-marca-tag programado">✓ Programado'+(ex.data_prog?' '+fmtDate(ex.data_prog):'')+'</span>':'';
-      const obsTag = (ex.obs&&ex.obs.trim())?'<span class="pag-obs-ind">📝</span>':'';
-      const isOpen = pagOpenOC===p.oc;
-      body+='<div class="pag-row '+rowClass+' '+marcaClass+(isOpen?' open':'')+'" onclick="togglePagRow(\''+esc(p.oc)+'\',event)">'+
-        '<div class="pr-main"><h4>'+esc(p.fornecedor||'(sem fornecedor)')+' '+marcaTag+obsTag+'</h4>'+
-          '<div class="pr-desc">'+esc(p.historico||'(sem descrição)')+'</div>'+
-          '<div class="pr-meta">'+
-            (p.oc?'<span class="chip">OC '+esc(p.oc)+'</span>':'')+
-            (p.coligada?'<span class="chip">🏢 '+esc(p.coligada)+'</span>':'')+
-            (p.data?'<span class="chip">📆 '+esc(fmtDate(p.data))+'</span>':'')+
-            (p.dados_pgto?'<span class="chip">'+esc((p.dados_pgto||'').split('|')[0].trim())+'</span>':'')+
-          '</div>'+
-          (isOpen?pagEditor(p.oc,ex):'')+
-        '</div>'+
-        '<div class="pr-right"><div class="pr-val">R$ '+fmtMoney(p.valor)+'</div>'+
-          badge+respHtml+'</div>'+
-      '</div>';
-    });
-    body+='</div>';
-  });
-  box.innerHTML=upload+fbar+cards+body;
-}
-function clearPagFilters(){pagFilters={emp:'',forn:'',mov:'',resp:'',busca:''};renderPagadoria();}
-// ---- Lote 2: Geração da planilha de envio (a partir da Pagadoria) ----
-let envioDraft={};
-function envioElegiveis(){
-  // Concluído Confirmado + Pendente (vermelhas) = candidatas a enviar
-  const norm=s=>(s||'').toString().toLowerCase();
-  return (DATA.pagadoria||[]).filter(p=>{
-    const a=norm(p.status_atend),m=norm(p.status_mov);
-    return a.includes('conclu') && m.includes('pend');
-  }).sort((a,b)=>(a.empreendimento||'').localeCompare(b.empreendimento||''));
-}
-function openEnvio(){
-  const elig=envioElegiveis();
-  envioDraft={};
-  elig.forEach(p=>{envioDraft[p.oc]={sel:false,nf:'',link:'',bx:'NÃO'};});
-  renderEnvioBody();
-  document.getElementById('envioOverlay').classList.add('show');
-}
-function closeEnvio(){document.getElementById('envioOverlay').classList.remove('show');envioDraft={};}
-function envioSet(oc,campo,val){if(!envioDraft[oc])return;envioDraft[oc][campo]=val;if(campo==='sel')renderEnvioBody();}
-function renderEnvioBody(){
-  const elig=envioElegiveis();
-  const box=document.getElementById('envioBody');
-  if(!elig.length){box.innerHTML='<div class="oc-empty">Nenhum pagamento pendente de envio (Concluído Confirmado + Pendente).</div>';return;}
-  const selCount=Object.values(envioDraft).filter(d=>d.sel).length;
-  let html='<p class="desc">Selecione os pagamentos a enviar e preencha NF, link da NF e se é baixa de adiantamento. Os demais dados saem automaticamente do relatório da pagadoria.</p>'+
-    '<div style="font-size:12.5px;color:var(--ink-dim);margin-bottom:10px">'+selCount+' de '+elig.length+' selecionado(s)</div>';
-  elig.forEach(p=>{
-    const d=envioDraft[p.oc]||{sel:false,nf:'',link:'',bx:'NÃO'};
-    const ocAtiv=p.oc+(p.atividade?'/'+p.atividade:'');
-    html+='<div style="border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;'+(d.sel?'background:var(--accent-soft,rgba(34,197,94,.07));border-color:var(--accent)':'')+'">'+
-      '<label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer">'+
-        '<input type="checkbox" '+(d.sel?'checked':'')+' onchange="envioSet(\''+esc(p.oc)+'\',\'sel\',this.checked)" style="margin-top:3px">'+
-        '<div style="flex:1"><b>'+esc(p.fornecedor||'(sem fornecedor)')+'</b>'+
-          '<div style="font-size:12px;color:var(--ink-dim);margin:2px 0">'+esc(p.historico||'')+'</div>'+
-          '<div style="font-size:12px"><span class="chip">'+esc(ocAtiv)+'</span> <span class="chip">'+esc(p.empreendimento||'')+'</span> <span class="chip">R$ '+fmtMoney(p.valor)+'</span></div>'+
-        '</div>'+
-      '</label>'+
-      (d.sel?('<div style="display:grid;grid-template-columns:1fr 2fr auto;gap:8px;margin-top:10px;padding-left:28px">'+
-        '<div class="field"><label>NF</label><input value="'+esc(d.nf)+'" oninput="envioSet(\''+esc(p.oc)+'\',\'nf\',this.value)" placeholder="Ex: NF 71"></div>'+
-        '<div class="field"><label>Link da NF</label><input value="'+esc(d.link)+'" oninput="envioSet(\''+esc(p.oc)+'\',\'link\',this.value)" placeholder="Caminho no servidor"></div>'+
-        '<div class="field"><label>BX ADT</label><select onchange="envioSet(\''+esc(p.oc)+'\',\'bx\',this.value)"><option '+(d.bx==='NÃO'?'selected':'')+'>NÃO</option><option '+(d.bx==='SIM'?'selected':'')+'>SIM</option></select></div>'+
-      '</div>'):'')+
-    '</div>';
-  });
-  box.innerHTML=html;
-}
-function exportEnvio(){
-  const elig=envioElegiveis();
-  const sel=elig.filter(p=>envioDraft[p.oc]&&envioDraft[p.oc].sel);
-  if(!sel.length){toast('Selecione ao menos um pagamento.',true);return;}
-  function xesc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function cell(v){
-    if(v==null||v==='')return '<Cell><Data ss:Type="String"></Data></Cell>';
-    if(typeof v==='number')return '<Cell><Data ss:Type="Number">'+v+'</Data></Cell>';
-    return '<Cell><Data ss:Type="String">'+xesc(v)+'</Data></Cell>';
-  }
-  function row(arr){return '<Row>'+arr.map(cell).join('')+'</Row>';}
-  const hoje=(()=>{const d=new Date(),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear();})();
-  const headers=['DATA ENTREGA','COLIGADA','EMPREEND','FORNECEDOR','DOCUMENTO','OC','VALOR','BX ADT','Valor a Pagar','VENCIMENTO','HISTORICO','FORMA DE PG','DADOS BANCÁRIOS','LINK'];
-  const rows=sel.map(p=>{
-    const d=envioDraft[p.oc];
-    const ocAtiv=p.oc+(p.atividade?'/'+p.atividade:'');
-    const formaPg=(p.dados_pgto||'').split('|')[0].trim();
-    const val=Math.round((Number(p.valor)||0)*100)/100;
-    return [hoje,p.coligada||'',p.empreendimento||'',p.fornecedor||'',d.nf||'',ocAtiv,val,d.bx||'',val,'',p.historico||'',formaPg,p.dados_pgto||'',d.link||''];
-  });
-  const xml='<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?>'+
-    '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+
-    '<Worksheet ss:Name="Envio"><Table>'+row(headers)+rows.map(row).join('')+'</Table></Worksheet></Workbook>';
-  const blob=new Blob([xml],{type:'application/vnd.ms-excel'});
-  const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  const d=new Date(),pad=n=>String(n).padStart(2,'0');
-  a.href=url;a.download='envio-pagadoria-'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.xls';
-  a.click();URL.revokeObjectURL(url);
-  toast(sel.length+' pagamento(s) na planilha de envio ✓');
-  closeEnvio();
-}
-let pagOpenOC=null;
-function togglePagRow(oc,ev){
-  // não alterna se o clique veio de dentro do editor (campos)
-  if(ev&&ev.target.closest&&ev.target.closest('.pag-editor'))return;
-  pagOpenOC = (pagOpenOC===oc)?null:oc;
-  renderPagadoria();
-}
-function pagEditor(oc,ex){
-  ex=ex||{};
-  const marca=ex.marca||'';
-  const obs=ex.obs||'';
-  function opt(val,lab){return '<button class="pag-mbtn'+(marca===val?' on '+(val||'none'):'')+'" onclick="setPagMarca(\''+esc(oc)+'\',\''+val+'\',event)">'+lab+'</button>';}
-  const dataProg = marca==='programado'
-    ? '<div class="pe-label" style="margin-top:10px">Data programada</div>'+
-      '<input type="date" class="pag-data" id="pagData-'+esc(oc)+'" value="'+esc(ex.data_prog||'')+'" onchange="savePagData(\''+esc(oc)+'\',this.value)">'
-    : '';
-  return '<div class="pag-editor" onclick="event.stopPropagation()">'+
-    '<div class="pe-label">Marcação</div>'+
-    '<div class="pag-mrow">'+
-      opt('','Nenhuma')+
-      opt('atencao','⚠ Requer atenção')+
-      opt('programado','✓ Programado p/ pagamento')+
-      opt('cancelar','✕ Solicitar cancelamento')+
-    '</div>'+
-    dataProg+
-    '<div class="pe-label"'+(marca==='programado'?' style="margin-top:10px"':'')+'>Observações</div>'+
-    '<textarea class="pag-obs" id="pagObs-'+esc(oc)+'" placeholder="Anote uma atualização sobre este pagamento…" oninput="savePagObs(\''+esc(oc)+'\',this.value)">'+esc(obs)+'</textarea>'+
-  '</div>';
-}
-function ensurePagExtra(oc){if(!DATA.pag_extras[oc])DATA.pag_extras[oc]={marca:'',obs:'',data_prog:''};return DATA.pag_extras[oc];}
-function setPagMarca(oc,val,ev){
-  if(ev)ev.stopPropagation();
-  const ex=ensurePagExtra(oc);ex.marca=val;
-  if(val!=='programado')ex.data_prog='';  // data só faz sentido em "programado"
-  persist();renderPagadoria();
-}
-function savePagData(oc,val){const ex=ensurePagExtra(oc);ex.data_prog=val;persist();renderPagadoria();}
-function savePagObs(oc,val){
-  const ex=ensurePagExtra(oc);ex.obs=val;
-  // salva sem re-renderizar (pra não perder o foco enquanto digita)
-  clearTimeout(window._pagObsT);window._pagObsT=setTimeout(persist,400);
-}
-function clearPagFiltersDummy(){}
-
-/* ---------- FORNECEDORES (catálogo) ---------- */
-let fornFilters={cidade:'',estado:'',tipo:''};
-function renderForn(){
-  updateCounts();
-  const box=document.getElementById('fornwrap');
-  const q=(document.getElementById('search').value||'').toLowerCase();
-  let lista=(DATA.fornecedores_cat||[]).slice().sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
-  if(q)lista=lista.filter(f=>JSON.stringify(f).toLowerCase().includes(q));
-  if(fornFilters.cidade)lista=lista.filter(f=>f.cidade===fornFilters.cidade);
-  if(fornFilters.estado)lista=lista.filter(f=>f.estado===fornFilters.estado);
-  if(fornFilters.tipo)lista=lista.filter(f=>(f.tipos||[]).includes(fornFilters.tipo));
-  // barra de filtros
-  const all=DATA.fornecedores_cat||[];
-  const cities=[...new Set(all.map(f=>f.cidade).filter(Boolean))].sort();
-  const states=[...new Set(all.map(f=>f.estado).filter(Boolean))].sort();
-  const fbar='<div class="filterbar" style="padding:0 0 18px">'+
-    '<select class="fsel" onchange="fornFilters.cidade=this.value;renderForn()"><option value="">Todas cidades</option>'+cities.map(c=>'<option '+(fornFilters.cidade===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
-    '<select class="fsel" onchange="fornFilters.estado=this.value;renderForn()"><option value="">Todos estados</option>'+states.map(c=>'<option '+(fornFilters.estado===c?'selected':'')+'>'+esc(c)+'</option>').join('')+'</select>'+
-    '<select class="fsel" onchange="fornFilters.tipo=this.value;renderForn()"><option value="">Todos tipos de serviço</option>'+tipoNames().map(t=>'<option '+(fornFilters.tipo===t?'selected':'')+'>'+esc(t)+'</option>').join('')+'</select>'+
-    ((fornFilters.cidade||fornFilters.estado||fornFilters.tipo)?'<span class="fclear" onclick="clearFornFilters()">limpar filtros</span>':'')+
-  '</div>';
-  const cadAviso='<div style="background:var(--amber);color:#7c2d12;font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:8px;margin-bottom:14px">⚠ Todo novo fornecedor deve ser cadastrado na <b>Coligada 01 — AG Imobiliária</b>.</div>';
-  if(!lista.length){box.innerHTML=cadAviso+fbar+'<div class="oc-empty">Nenhum fornecedor encontrado.</div>';return;}
-  box.innerHTML=cadAviso+fbar+lista.map(f=>{
-    const loc=[f.cidade,f.estado].filter(Boolean).join(', ');
-    let chips='';
-    if(loc)chips+='<span class="chip city">📍 '+esc(loc)+'</span>';
-    if(f.telefone)chips+='<span class="chip">📞 '+esc(f.telefone)+'</span>';
-    if(f.email)chips+='<span class="chip">✉ '+esc(f.email)+'</span>';
-    if(f.cnpj)chips+='<span class="chip">🧾 '+esc(f.cnpj)+'</span>';
-    const tipos=(f.tipos||[]).map(t=>{const c=tipoColor(t);return '<span class="chip" style="border-color:'+c+';color:'+c+'"><span class="cdot" style="background:'+c+'"></span>'+esc(t)+'</span>';}).join('');
-    return '<div class="forn-cat-card" onclick="openForn(\''+f.id+'\')">'+
-      '<div class="fc-top"><div style="flex:1"><h4>'+esc(f.nome||'(sem nome)')+'</h4>'+
-        (f.responsavel?'<div class="fc-sub">Contato: '+esc(f.responsavel)+'</div>':'')+'</div></div>'+
-      (chips?'<div class="fc-meta">'+chips+'</div>':'')+
-      (tipos?'<div class="fc-meta">'+tipos+'</div>':'')+'</div>';
-  }).join('');
-}
-function clearFornFilters(){fornFilters={cidade:'',estado:'',tipo:''};renderForn();}
-let fornDraft=null, fornEditId=null;
-function openForn(id){
-  fornEditId=id||null;
-  const ex=id?DATA.fornecedores_cat.find(f=>f.id===id):null;
-  fornDraft= ex?JSON.parse(JSON.stringify(ex)):{nome:'',cnpj:'',cidade:'',estado:'',responsavel:'',telefone:'',email:'',tipos:[]};
-  if(!Array.isArray(fornDraft.tipos))fornDraft.tipos=[];
-  document.getElementById('fornModalTitle').textContent=ex?'Editar fornecedor':'Novo fornecedor';
-  document.getElementById('fornDelBtn').style.display=ex?'inline-flex':'none';
-  renderFornModal();
-  document.getElementById('fornOverlay').classList.add('show');
-}
-function renderFornModal(){
-  const b=document.getElementById('fornModalBody');
-  const tags=tipoNames().map(t=>{const on=fornDraft.tipos.includes(t);const c=tipoColor(t);
-    return '<span class="tipo-tag'+(on?' on':'')+'" style="'+(on?'background:'+c+';border-color:'+c:'')+'" onclick="toggleTipo(\''+t.replace(/'/g,"\\'")+'\')">'+esc(t)+'</span>';}).join('');
-  b.innerHTML=
-    '<div class="field full"><label>Nome da empresa *</label><input id="fNome" value="'+esc(fornDraft.nome)+'"></div>'+
-    '<div class="field"><label>CNPJ</label><input id="fCnpj" value="'+esc(fornDraft.cnpj)+'"></div>'+
-    '<div class="field"><label>Responsável</label><input id="fResp" value="'+esc(fornDraft.responsavel)+'"></div>'+
-    '<div class="field"><label>Cidade</label><input id="fCidade" value="'+esc(fornDraft.cidade)+'"></div>'+
-    '<div class="field"><label>Estado</label><input id="fEstado" value="'+esc(fornDraft.estado)+'"></div>'+
-    '<div class="field"><label>Telefone</label><input id="fTel" value="'+esc(fornDraft.telefone)+'"></div>'+
-    '<div class="field"><label>E-mail</label><input id="fEmail" value="'+esc(fornDraft.email)+'"></div>'+
-    '<div class="field full"><label>Tipos de serviço (selecione um ou mais)</label><div class="tipo-tags">'+tags+'</div></div>';
-}
-function toggleTipo(t){syncForn();const i=fornDraft.tipos.indexOf(t);
-  if(i>=0)fornDraft.tipos.splice(i,1);else fornDraft.tipos.push(t);renderFornModal();}
-function syncForn(){
-  fornDraft.nome=document.getElementById('fNome').value;
-  fornDraft.cnpj=document.getElementById('fCnpj').value;
-  fornDraft.responsavel=document.getElementById('fResp').value;
-  fornDraft.cidade=document.getElementById('fCidade').value;
-  fornDraft.estado=document.getElementById('fEstado').value;
-  fornDraft.telefone=document.getElementById('fTel').value;
-  fornDraft.email=document.getElementById('fEmail').value;
-}
-function closeForn(){document.getElementById('fornOverlay').classList.remove('show');fornDraft=null;fornEditId=null;}
-function saveForn(){
-  syncForn();
-  if(!fornDraft.nome.trim()){toast('Digite o nome da empresa.',true);return;}
-  if(fornEditId){const i=DATA.fornecedores_cat.findIndex(f=>f.id===fornEditId);
-    DATA.fornecedores_cat[i]=Object.assign({},DATA.fornecedores_cat[i],fornDraft);toast('Fornecedor salvo ✓');}
-  else{fornDraft.id=uid('fc');fornDraft.created_at=new Date().toISOString();DATA.fornecedores_cat.unshift(fornDraft);toast('Fornecedor cadastrado ✓');}
-  persist();closeForn();renderForn();
-}
-function delForn(){
-  if(!fornEditId)return;if(!confirm('Excluir este fornecedor do catálogo?'))return;
-  DATA.fornecedores_cat=DATA.fornecedores_cat.filter(f=>f.id!==fornEditId);persist();closeForn();renderForn();toast('Excluído ✓');
-}
-
-/* ---------- ORÇAMENTOS ---------- */
+/* ---------- CONTADORES ---------- */
 function updateCounts(){
-  document.getElementById('cnt-eventos').textContent=(DATA.eventos||[]).length;
-  document.getElementById('cnt-lancamentos').textContent=(DATA.lancamentos||[]).length;
+  const ev=document.getElementById('cnt-eventos');if(ev)ev.textContent=(DATA.eventos||[]).length;
   const lc=document.getElementById('cnt-lembretes');if(lc)lc.textContent=(DATA.lembretes||[]).filter(l=>!l.concluido).length;
-  const fc=document.getElementById('cnt-fornecedores');if(fc)fc.textContent=(DATA.fornecedores_cat||[]).length;
-  const pg=document.getElementById('cnt-pagadoria');if(pg)pg.textContent=(DATA.pagadoria||[]).length;
 }
 /* ---------- LEMBRETES (to-do list) ---------- */
-function onNew(){ if(current==='lembretes')openLemb(); else if(current==='fornecedores')openForn(); else openModal(); }
+function onNew(){ if(current==='lembretes')openLemb(); else openModal(); }
 let lembFilters={resp:''};
 let lembShowDone=false;
 function isLembAtrasado(l){return l.prazo && !l.concluido && new Date(l.prazo+'T00:00:00')<new Date(new Date().toDateString());}
@@ -1575,7 +1068,9 @@ function renderCalendar(){
     evs.slice(0,3).forEach(ev=>{
       const col=ev.empreendimento?empColor(ev.empreendimento):'var(--ink-dim)';
       const emp=ev.empreendimento?'<span style="opacity:.85;font-weight:500"> · '+esc(ev.empreendimento)+'</span>':'';
-      evHtml+='<div class="cal-ev" style="background:'+col+'" onclick="openEventById(\''+ev.id+'\')" title="'+esc(ev.nome)+(ev.empreendimento?' — '+esc(ev.empreendimento):'')+'">'+esc(ev.nome)+emp+'</div>';
+      const nf=(Array.isArray(ev.fornecedores)?ev.fornecedores.filter(f=>f&&(f.nome||f.cnpj)):[]).length;
+      const fbadge=nf?'<span style="opacity:.9;font-weight:600"> 🤝'+nf+'</span>':'';
+      evHtml+='<div class="cal-ev" style="background:'+col+'" onclick="openEventById(\''+ev.id+'\')" title="'+esc(ev.nome)+(ev.empreendimento?' — '+esc(ev.empreendimento):'')+(nf?' — '+nf+' fornecedor'+(nf>1?'es':''):'')+'">'+esc(ev.nome)+emp+fbadge+'</div>';
     });
     if(evs.length>3)evHtml+='<div class="cal-more">+'+(evs.length-3)+' mais</div>';
     grid+='<div class="cal-cell'+(isToday?' today':isPast?' past':'')+'"><div class="cal-day">'+d+'</div>'+evHtml+'</div>';
@@ -1701,7 +1196,7 @@ function saveTipo(){
   if(dup){toast('Esse tipo já existe.',true);return;}
   if(tipoEditId){const t=DATA.tipos_servico.find(x=>x.id===tipoEditId);const oldNome=t.nome;
     t.nome=nome;t.cor=cor;
-    if(oldNome!==nome)(DATA.fornecedores_cat||[]).forEach(f=>{if(f.tipos){const i=f.tipos.indexOf(oldNome);if(i>=0)f.tipos[i]=nome;}});
+    if(oldNome!==nome)(DATA.eventos||[]).forEach(e=>{(e.fornecedores||[]).forEach(f=>{if(f&&f.categoria===oldNome)f.categoria=nome;});});
     tipoEditId=null;toast('Tipo salvo ✓');
   }else{DATA.tipos_servico.push({id:uid('ts'),nome,cor});toast('Tipo adicionado ✓');}
   persist();renderSettings();
@@ -1787,6 +1282,7 @@ function openModal(item){
   const M=MODULES[current];editingId=item?item.id:null;
   _dataLimiteManual=false;
   draftChecklist=item&&Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[];
+  draftFornecedores=(current==='eventos'&&item&&Array.isArray(item.fornecedores))?JSON.parse(JSON.stringify(item.fornecedores)):[];
   document.getElementById('modalTitle').textContent=item?'Editar item':'Novo '+M.title.toLowerCase().replace(/s$/,'');
   document.getElementById('delBtn').style.display=item?'inline-flex':'none';
   const body=document.getElementById('modalBody');body.innerHTML='';
@@ -1817,7 +1313,64 @@ function openModal(item){
     '<button class="cl-mini" onclick="addClItem()">Adicionar</button></div>';
   body.appendChild(clWrap);
   renderChecklist();
+  if(current==='eventos'){
+    const fWrap=document.createElement('div');fWrap.className='checklist';
+    fWrap.innerHTML='<div class="cl-head"><label>Fornecedores do evento</label>'+
+        '<div class="cl-actions"><button class="cl-mini" onclick="addEventForn()">+ Adicionar fornecedor</button></div></div>'+
+      '<div class="cl-items" id="evtFornItems"></div>'+
+      '<datalist id="fornNomeList"></datalist>';
+    body.appendChild(fWrap);
+    renderEventForn();
+  }
   document.getElementById('overlay').classList.add('show');
+}
+/* ---------- FORNECEDORES DO EVENTO ---------- */
+function fornKnown(){                 // fornecedores já usados em outros eventos (para autocomplete)
+  const map={};
+  (DATA.eventos||[]).forEach(e=>{(e.fornecedores||[]).forEach(f=>{
+    if(!f||!f.nome)return;const key=f.nome.trim().toLowerCase();if(!key)return;
+    if(!map[key])map[key]={nome:f.nome.trim(),cnpj:f.cnpj||'',categoria:f.categoria||'',contato:f.contato||''};
+  });});
+  return Object.values(map).sort((a,b)=>a.nome.localeCompare(b.nome));
+}
+function maskCnpj(v){
+  const d=String(v||'').replace(/\D/g,'').slice(0,14);
+  if(d.length<=2)return d;
+  if(d.length<=5)return d.replace(/(\d{2})(\d+)/,'$1.$2');
+  if(d.length<=8)return d.replace(/(\d{2})(\d{3})(\d+)/,'$1.$2.$3');
+  if(d.length<=12)return d.replace(/(\d{2})(\d{3})(\d{3})(\d+)/,'$1.$2.$3/$4');
+  return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d+)/,'$1.$2.$3/$4-$5');
+}
+function renderEventForn(){
+  const box=document.getElementById('evtFornItems');if(!box)return;
+  const dl=document.getElementById('fornNomeList');
+  if(dl)dl.innerHTML=fornKnown().map(f=>'<option value="'+esc(f.nome)+'">').join('');
+  const tipos=tipoNames();
+  if(!draftFornecedores.length){box.innerHTML='<div style="font-size:12.5px;color:var(--ink-dim);font-style:italic;padding:2px">Nenhum fornecedor. Clique em “+ Adicionar fornecedor”.</div>';return;}
+  box.innerHTML='';
+  draftFornecedores.forEach((f,idx)=>{
+    const row=document.createElement('div');row.className='forn-row';
+    const catOpts='<option value="">— categoria —</option>'+tipos.map(t=>'<option '+(f.categoria===t?'selected':'')+'>'+esc(t)+'</option>').join('');
+    row.innerHTML=
+      '<select onchange="editEventForn('+idx+',\'categoria\',this.value)">'+catOpts+'</select>'+
+      '<input list="fornNomeList" placeholder="Nome do fornecedor" value="'+esc(f.nome||'')+'" oninput="editEventForn('+idx+',\'nome\',this.value)" onchange="fornAutofill('+idx+',this.value)">'+
+      '<input placeholder="CNPJ" value="'+esc(f.cnpj||'')+'" oninput="editEventForn('+idx+',\'cnpj\',maskCnpj(this.value));this.value=maskCnpj(this.value)">'+
+      '<input placeholder="Contato (tel/e-mail)" value="'+esc(f.contato||'')+'" oninput="editEventForn('+idx+',\'contato\',this.value)">'+
+      '<button class="cl-del" title="Remover" onclick="delEventForn('+idx+')">✕</button>';
+    box.appendChild(row);
+  });
+}
+function addEventForn(){draftFornecedores.push({categoria:'',nome:'',cnpj:'',contato:''});renderEventForn();}
+function editEventForn(i,k,v){if(draftFornecedores[i])draftFornecedores[i][k]=v;}
+function delEventForn(i){draftFornecedores.splice(i,1);renderEventForn();}
+function fornAutofill(i,nome){        // ao escolher um nome já conhecido, completa CNPJ/categoria/contato vazios
+  const row=draftFornecedores[i];if(!row)return;
+  const known=fornKnown().find(f=>f.nome.trim().toLowerCase()===String(nome||'').trim().toLowerCase());
+  if(!known)return;
+  if(!row.cnpj)row.cnpj=known.cnpj;
+  if(!row.categoria)row.categoria=known.categoria;
+  if(!row.contato)row.contato=known.contato;
+  renderEventForn();
 }
 function renderChecklist(){
   const box=document.getElementById('clItems');if(!box)return;
@@ -1872,7 +1425,7 @@ function sel(k,opts,v,blank){let o=blank?'<option value="">'+blank+'</option>':'
   opts.forEach(op=>{const val=Array.isArray(op)?op[0]:op,lab=Array.isArray(op)?op[1]:op;
     o+='<option value="'+esc(val)+'" '+(val==v?'selected':'')+'>'+esc(lab)+'</option>';});
   return '<select id="fld-'+k+'">'+o+'</select>';}
-function closeModal(){document.getElementById('overlay').classList.remove('show');editingId=null;draftChecklist=[];}
+function closeModal(){document.getElementById('overlay').classList.remove('show');editingId=null;draftChecklist=[];draftFornecedores=[];}
 function saveItem(){
   const M=MODULES[current],obj={};
   for(const f of M.fields){let val=document.getElementById('fld-'+f.k).value;
@@ -1881,6 +1434,7 @@ function saveItem(){
     if(f.t==='currency')val=currencyToNumber(val);
     if(f.t==='evento'&&val==='')val=null;if(val==='')val=null;obj[f.k]=val;}
   obj.checklist=draftChecklist.filter(c=>c.text.trim());
+  if(current==='eventos')obj.fornecedores=draftFornecedores.filter(f=>f&&(f.nome&&f.nome.trim()||f.cnpj&&f.cnpj.trim())).map(f=>({categoria:f.categoria||'',nome:(f.nome||'').trim(),cnpj:(f.cnpj||'').trim(),contato:(f.contato||'').trim()}));
   if(editingId){Object.assign(DATA[current].find(x=>x.id===editingId),obj);toast('Salvo ✓');}
   else{obj.id=uid();obj.created_at=new Date().toISOString();DATA[current].unshift(obj);toast('Criado ✓');}
   persist();closeModal();
@@ -1925,17 +1479,16 @@ function exportExcel(){
     (DATA.lembretes||[]).map(l=>[l.titulo,l.responsavel,l.prazo,l.concluido?'sim':'não',stripHtml(l.observacoes),
       (l.checklist||[]).map(c=>(c.done?'[x] ':'[ ] ')+c.text).join('; ')]));
 
-  // Lançamentos
-  const shLanc=sheet('Lançamentos',
-    ['Título','Empreendimento','Coligada','Fornecedor','CNPJ/CPF','Cidade forn.','Estado forn.','Valor','Parcela','Forma pgto','Status','Prioridade','Responsável','Data limite','Evento','Observações'],
-    DATA.lancamentos.map(l=>[l.titulo,l.empreendimento,empColigada(l.empreendimento),l.fornecedor,l.cnpj,l.forn_cidade,l.forn_estado,
-      (l.valor!=null?Number(l.valor):''),(l.total_parcelas?((l.parcela_atual||1)+'/'+l.total_parcelas):''),l.forma_pagamento,
-      (MODULES.lancamentos.colLabels[l.status]||l.status),l.prioridade,l.responsavel,l.data_limite,evName(l.evento_id),l.observacoes]));
-
-  // Fornecedores (catálogo)
-  const shForn=sheet('Fornecedores',
-    ['Empresa','CNPJ','Responsável','Telefone','E-mail','Cidade','Estado','Tipos de serviço'],
-    (DATA.fornecedores_cat||[]).map(f=>[f.nome,f.cnpj,f.responsavel,f.telefone,f.email,f.cidade,f.estado,(f.tipos||[]).join(', ')]));
+  // Fornecedores por evento (um por linha)
+  const fornRows=[];
+  (DATA.eventos||[]).forEach(e=>{
+    (Array.isArray(e.fornecedores)?e.fornecedores:[]).forEach(f=>{
+      if(!f||(!f.nome&&!f.cnpj))return;
+      fornRows.push([e.nome,e.empreendimento,e.data_evento,f.categoria,f.nome,f.cnpj,f.contato]);
+    });
+  });
+  const shForn=sheet('Fornecedores por evento',
+    ['Evento','Empreendimento','Data','Categoria','Fornecedor','CNPJ','Contato'],fornRows);
 
   const xml='<?xml version="1.0"?>\n'+
     '<?mso-application progid="Excel.Sheet"?>\n'+
@@ -1943,7 +1496,7 @@ function exportExcel(){
     'xmlns:o="urn:schemas-microsoft-com:office:office" '+
     'xmlns:x="urn:schemas-microsoft-com:office:excel" '+
     'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">'+
-    shEventos+shLemb+shLanc+shForn+'</Workbook>';
+    shEventos+shLemb+shForn+'</Workbook>';
 
   const blob=new Blob([xml],{type:'application/vnd.ms-excel'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
@@ -1955,10 +1508,9 @@ function importData(ev){
   const file=ev.target.files[0];if(!file)return;
   const r=new FileReader();
   r.onload=()=>{try{const d=JSON.parse(r.result);
-    ['eventos','lembretes','lancamentos','empreendimentos','coligadas','responsaveis','fornecedores_cat','checklist_models','tipos_servico','pagadoria'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[];});
+    ['eventos','lembretes','empreendimentos','coligadas','responsaveis','checklist_models','tipos_servico'].forEach(k=>{if(!Array.isArray(d[k]))d[k]=[];});
     if(!d.tipos_servico.length)d.tipos_servico=JSON.parse(JSON.stringify(SEED_TIPOS));
     if(!d.coligadas.length)d.coligadas=JSON.parse(JSON.stringify(SEED_COLIGADAS));
-    if(!d.pag_extras||typeof d.pag_extras!=='object'||Array.isArray(d.pag_extras))d.pag_extras={};
     if(!confirm('Importar vai SUBSTITUIR os dados atuais por este arquivo. Continuar?')){ev.target.value='';return;}
     DATA=d;if(!DATA.empreendimentos.length)DATA.empreendimentos=JSON.parse(JSON.stringify(SEED_EMPS));
     persist();render();toast('Dados importados ✓');
@@ -1999,12 +1551,9 @@ async function loadFromSupabase(){
     if(error)throw new Error('Tabela "'+SB_TABLES[k]+'": '+error.message);
     DATA[k]=data||[];
   }
-  const {data:marc,error:em}=await sb.from('pagadoria_marcacoes').select('*');
-  if(em)throw new Error('Tabela "pagadoria_marcacoes": '+em.message);
-  DATA.pag_extras={};
-  (marc||[]).forEach(m=>{DATA.pag_extras[m.oc]={marca:m.marca||'',obs:m.obs||'',data_prog:m.data_prog||''};});
   if(!Array.isArray(DATA.checklist_models))DATA.checklist_models=[];
-  ['eventos','lembretes','lancamentos','empreendimentos','coligadas','responsaveis','fornecedores_cat','checklist_models','tipos_servico','pagadoria'].forEach(k=>{if(!Array.isArray(DATA[k]))DATA[k]=[];});
+  (DATA.eventos||[]).forEach(e=>{if(!Array.isArray(e.fornecedores))e.fornecedores=[];});
+  ['eventos','lembretes','empreendimentos','coligadas','responsaveis','checklist_models','tipos_servico'].forEach(k=>{if(!Array.isArray(DATA[k]))DATA[k]=[];});
   sortLembByOrder();   // respeita a ordem manual definida por arrastar
 }
 
@@ -2019,12 +1568,20 @@ function showLogin(){
   ov.style.display='flex';ov.classList.add('show');
 }
 
+let _appStarted=false;
 async function startApp(){
-  await loadFromSupabase();          // se falhar, o catch de quem chamou mostra o erro
-  canPersist=true;setSave(true);
-  hideLogin();                        // esconde ANTES de renderizar (à prova de erro de render)
-  try{render();switchTab('calendario');}
-  catch(e){console.error('Render:',e);toast('Aviso ao renderizar: '+(e&&e.message?e.message:e),true);}
+  if(_appStarted)return;             // evita rodar duas vezes (ex.: sessão salva + login manual)
+  _appStarted=true;
+  try{
+    await loadFromSupabase();        // se falhar, o catch de quem chamou mostra o erro
+    canPersist=true;setSave(true);
+    hideLogin();                     // esconde ANTES de renderizar (à prova de erro de render)
+    try{switchTab('calendario');}    // switchTab já desenha a aba certa — não precisa render() aqui
+    catch(e){console.error('Render:',e);toast('Aviso ao renderizar: '+(e&&e.message?e.message:e),true);}
+  }catch(e){
+    _appStarted=false;               // libera nova tentativa se o carregamento falhar
+    throw e;
+  }
 }
 
 (async function(){
