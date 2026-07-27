@@ -328,13 +328,20 @@ html[data-theme="dark"] .cal-cell.today .cal-day{color:var(--accent)}
 .cl-row.done .cl-txt{text-decoration:line-through;color:var(--ink-dim)}
 .cl-row .cl-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:0 4px}
 .cl-row .cl-del:hover{color:var(--red)}
-.forn-row{display:grid;grid-template-columns:150px 1fr 150px 150px 26px;gap:8px;align-items:center;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
-.forn-row select,.forn-row input{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:6px 8px;color:var(--ink);font-family:inherit;font-size:12.5px;min-width:0}
-.forn-row select:focus,.forn-row input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
-.forn-row .cl-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:15px;padding:0}
-.forn-row .cl-del:hover{color:var(--red)}
-@media(max-width:640px){.forn-row{grid-template-columns:1fr 1fr;grid-auto-rows:auto}.forn-row .cl-del{grid-column:2;justify-self:end}}
+.forn-card{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.fcard-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.fcard-num{font-size:11.5px;font-weight:700;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.4px}
+.fcard-top .cl-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;font-weight:600;padding:0}
+.fcard-top .cl-del:hover{color:var(--red)}
+.fcard-field{display:flex;flex-direction:column;gap:3px;min-width:0}
+.fcard-field label{font-size:11px;font-weight:600;color:var(--ink-dim)}
+.fcard-field.full{margin-bottom:8px}
+.fcard-field select,.fcard-field input{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:8px 10px;color:var(--ink);font-family:inherit;font-size:13px;width:100%}
+.fcard-field select:focus,.fcard-field input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.fcard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+@media(max-width:640px){.fcard-grid{grid-template-columns:1fr}}
 /* ---- Orçamentos ---- */
+#orcModalBody{display:block}
 .orcwrap{padding:0 30px 50px}
 .oc-empty{color:var(--ink-dim);font-style:italic;padding:30px 4px;text-align:center}
 .orc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
@@ -1589,15 +1596,21 @@ function renderEventForn(){
   if(!draftFornecedores.length){box.innerHTML='<div style="font-size:12.5px;color:var(--ink-dim);font-style:italic;padding:2px">Nenhum fornecedor. Clique em “+ Adicionar fornecedor”.</div>';return;}
   box.innerHTML='';
   draftFornecedores.forEach((f,idx)=>{
-    const row=document.createElement('div');row.className='forn-row';
+    const card=document.createElement('div');card.className='forn-card';
     const catOpts='<option value="">— categoria —</option>'+tipos.map(t=>'<option '+(f.categoria===t?'selected':'')+'>'+esc(t)+'</option>').join('');
-    row.innerHTML=
-      '<select onchange="editEventForn('+idx+',\'categoria\',this.value)">'+catOpts+'</select>'+
-      '<input list="fornNomeList" placeholder="Nome do fornecedor" value="'+esc(f.nome||'')+'" oninput="editEventForn('+idx+',\'nome\',this.value)" onchange="fornAutofill('+idx+',this.value)">'+
-      '<input placeholder="CNPJ" value="'+esc(f.cnpj||'')+'" oninput="editEventForn('+idx+',\'cnpj\',maskCnpj(this.value));this.value=maskCnpj(this.value)">'+
-      '<input placeholder="Contato (tel/e-mail)" value="'+esc(f.contato||'')+'" oninput="editEventForn('+idx+',\'contato\',this.value)">'+
-      '<button class="cl-del" title="Remover" onclick="delEventForn('+idx+')">✕</button>';
-    box.appendChild(row);
+    card.innerHTML=
+      '<div class="fcard-top">'+
+        '<span class="fcard-num">Fornecedor '+(idx+1)+'</span>'+
+        '<button class="cl-del" title="Remover fornecedor" onclick="delEventForn('+idx+')">✕ remover</button>'+
+      '</div>'+
+      '<div class="fcard-field full"><label>Nome</label>'+
+        '<input list="fornNomeList" placeholder="Nome do fornecedor" value="'+esc(f.nome||'')+'" oninput="editEventForn('+idx+',\'nome\',this.value)" onchange="fornAutofill('+idx+',this.value)"></div>'+
+      '<div class="fcard-grid">'+
+        '<div class="fcard-field"><label>Categoria</label><select onchange="editEventForn('+idx+',\'categoria\',this.value)">'+catOpts+'</select></div>'+
+        '<div class="fcard-field"><label>CNPJ</label><input inputmode="numeric" placeholder="00.000.000/0000-00" value="'+esc(f.cnpj||'')+'" oninput="editEventForn('+idx+',\'cnpj\',maskCnpj(this.value));this.value=maskCnpj(this.value)"></div>'+
+        '<div class="fcard-field"><label>Contato</label><input placeholder="Telefone ou e-mail" value="'+esc(f.contato||'')+'" oninput="editEventForn('+idx+',\'contato\',this.value)"></div>'+
+      '</div>';
+    box.appendChild(card);
   });
 }
 function addEventForn(){draftFornecedores.push({categoria:'',nome:'',cnpj:'',contato:''});renderEventForn();}
