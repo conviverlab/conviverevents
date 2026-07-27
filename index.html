@@ -374,6 +374,19 @@ html[data-theme="dark"] .cal-cell.today .cal-day{color:var(--accent)}
 .orc-grid input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
 .orc-grid input.orc-preco{text-align:right}
 .orc-grid input.orc-preco.win{border-color:#22c55e;background:rgba(34,197,94,.12);color:#16a34a;font-weight:700}
+.orc-hint{font-size:12px;color:var(--ink-dim);margin:0 0 12px}
+.orc-secao-head{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.orc-secao-actions{display:flex;gap:8px;flex:0 0 auto;white-space:nowrap}
+.orc-colh{display:flex;align-items:center;gap:2px}
+.orc-colh input{width:100%;min-width:70px;background:var(--card);border:1px solid var(--line);border-radius:6px;padding:5px 6px;color:var(--ink);font-family:inherit;font-size:12px;font-weight:600}
+.orc-colh input:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
+.colh-del{background:none;border:none;color:var(--ink-dim);cursor:pointer;font-size:12px;padding:0 2px;flex:0 0 auto}
+.colh-del:hover{color:var(--red)}
+.orc-subrow td{font-weight:700;color:var(--ink);border-top:1px solid var(--line);padding-top:8px!important;font-size:12px}
+.orc-subrow td:nth-child(n+3){text-align:right;padding-right:10px}
+.orc-sec-esc{font-size:12px;color:var(--ink-dim);white-space:nowrap}
+.orc-sec-esc b{color:#16a34a}
+.ps-table tr.ps-subtotal td{background:#f3f4f6;font-weight:700;color:#333;border-top:2px solid #ddd}
 .orc-secao-foot{display:flex;gap:10px;align-items:center;margin-top:8px}
 .orc-obs{flex:1;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--ink);font-family:inherit;font-size:12px}
 .orc-obs:focus{outline:none;border-color:var(--accent);box-shadow:var(--ring)}
@@ -730,7 +743,7 @@ function cleanRow(table,row){
     if(c==='bx_adiantamento')v=(v===true||v==='SIM'||v==='true');
     if(c==='concluido')v=(v===true||v==='true');
     // jsonb arrays nunca null
-    if((c==='checklist'||c==='tipos') && !Array.isArray(v))v=[];
+    if((c==='checklist'||c==='tipos'||c==='fornecedores'||c==='secoes') && !Array.isArray(v))v=[];
     out[c]=v;
   });
   if((table==='lancamentos'||table==='fornecedores') && 'cnpj' in out){
@@ -983,12 +996,15 @@ function onNew(){ if(current==='lembretes')openLemb(); else if(current==='orcame
 const ORC_STATUS={rascunho:{l:'Rascunho',c:'#94a3b8'},aguardando:{l:'Aguardando aprovação',c:'#f59e0b'},aprovado:{l:'Aprovado',c:'#22c55e'},reprovado:{l:'Reprovado',c:'#ef4444'}};
 let orcEditId=null, draftOrc=null;
 function orcItemMin(it){let min=null,idx=-1;(it.precos||[]).forEach((p,i)=>{const n=Number(p);if(p!=null&&p!==''&&!isNaN(n)&&(min===null||n<min)){min=n;idx=i;}});return {min:min,idx:idx};}
-function orcTotals(o){const nf=(o.fornecedores||[]).length;const porForn=new Array(nf).fill(0);let escolhido=0;
-  (o.secoes||[]).forEach(se=>{(se.itens||[]).forEach(it=>{
-    (it.precos||[]).forEach((p,i)=>{const n=Number(p);if(p!=null&&p!==''&&!isNaN(n)&&i<nf)porForn[i]+=n;});
+function secForns(se){return Array.isArray(se.fornecedores)?se.fornecedores:[];}
+function secTotals(se){const fns=secForns(se);const porForn=new Array(fns.length).fill(0);let escolhido=0;
+  (se.itens||[]).forEach(it=>{
+    (it.precos||[]).forEach((p,i)=>{const n=Number(p);if(p!=null&&p!==''&&!isNaN(n)&&i<fns.length)porForn[i]+=n;});
     const m=orcItemMin(it);if(m.min!=null)escolhido+=m.min;
-  });});
+  });
   return {porForn:porForn,escolhido:escolhido};}
+function orcEscolhido(o){let s=0;(o.secoes||[]).forEach(se=>{s+=secTotals(se).escolhido;});return s;}
+function orcUniqForn(o){const set=new Set();(o.secoes||[]).forEach(se=>secForns(se).forEach(f=>{if(f&&f.trim())set.add(f.trim());}));return Array.from(set);}
 function renderOrc(){
   updateCounts();
   const box=document.getElementById('orcwrap');
@@ -997,7 +1013,7 @@ function renderOrc(){
   if(q)lista=lista.filter(o=>JSON.stringify(o).toLowerCase().includes(q));
   if(!lista.length){box.innerHTML='<div class="oc-empty">Nenhum orçamento ainda. Clique em “+ Novo” para montar um.</div>';return;}
   box.innerHTML='<div class="orc-list">'+lista.map(o=>{
-    const st=ORC_STATUS[o.status]||ORC_STATUS.rascunho;const t=orcTotals(o);
+    const st=ORC_STATUS[o.status]||ORC_STATUS.rascunho;
     const ev=o.evento_id?DATA.eventos.find(e=>e.id===o.evento_id):null;
     const nItens=(o.secoes||[]).reduce((s,se)=>s+((se.itens||[]).length),0);
     return '<div class="orc-card" onclick="openOrc(\''+o.id+'\')">'+
@@ -1006,24 +1022,28 @@ function renderOrc(){
         (o.data?'<span class="chip">📆 '+esc(o.data)+'</span>':'')+
         (o.local?'<span class="chip city">📍 '+esc(o.local)+'</span>':'')+
         (ev?'<span class="chip evt">🎯 '+esc(ev.nome)+'</span>':'')+
-        '<span class="chip">'+((o.fornecedores||[]).filter(f=>f&&f.trim()).length)+' fornecedores</span>'+
+        '<span class="chip">'+((o.secoes||[]).length)+' seções</span>'+
         '<span class="chip">'+nItens+' itens</span>'+
       '</div>'+
-      '<div class="oc-foot"><span>Total escolhido:</span> <b>R$ '+fmtMoney(t.escolhido)+'</b>'+
+      '<div class="oc-foot"><span>Total escolhido:</span> <b>R$ '+fmtMoney(orcEscolhido(o))+'</b>'+
         '<button class="btn-mini" onclick="event.stopPropagation();presentOrc(\''+o.id+'\')">👁 Apresentar</button></div>'+
     '</div>';
   }).join('')+'</div>';
 }
-function blankOrc(){return {titulo:'',evento_id:'',data:'',horario:'',local:'',responsavel:'',status:'rascunho',fornecedores:['',''],secoes:[{nome:'Produção',obs:'',itens:[{descricao:'',unid:'',precos:[null,null]}]}]};}
+function novaSecao(){return {nome:'',obs:'',fornecedores:['',''],itens:[{descricao:'',unid:'',precos:[null,null]}]};}
+function blankOrc(){const s=novaSecao();s.nome='Produção';return {titulo:'',evento_id:'',data:'',horario:'',local:'',responsavel:'',status:'rascunho',fornecedores:[],secoes:[s]};}
 function openOrc(id){
   orcEditId=id||null;
   const ex=id?DATA.orcamentos.find(o=>o.id===id):null;
   draftOrc= ex?JSON.parse(JSON.stringify(ex)):blankOrc();
-  if(!Array.isArray(draftOrc.fornecedores)||!draftOrc.fornecedores.length)draftOrc.fornecedores=['',''];
-  if(!Array.isArray(draftOrc.secoes)||!draftOrc.secoes.length)draftOrc.secoes=[{nome:'',obs:'',itens:[{descricao:'',unid:'',precos:[]}]}];
-  const nf=draftOrc.fornecedores.length;
-  draftOrc.secoes.forEach(se=>{if(!Array.isArray(se.itens)||!se.itens.length)se.itens=[{descricao:'',unid:'',precos:[]}];
-    se.itens.forEach(it=>{if(!Array.isArray(it.precos))it.precos=[];while(it.precos.length<nf)it.precos.push(null);it.precos.length=nf;});});
+  if(!Array.isArray(draftOrc.secoes)||!draftOrc.secoes.length)draftOrc.secoes=[novaSecao()];
+  const legacy=Array.isArray(draftOrc.fornecedores)?draftOrc.fornecedores:[];   // migra formato antigo (fornecedores globais)
+  draftOrc.secoes.forEach(se=>{
+    if(!Array.isArray(se.fornecedores)||!se.fornecedores.length)se.fornecedores=(legacy.length?legacy.slice():['','']);
+    if(!Array.isArray(se.itens)||!se.itens.length)se.itens=[{descricao:'',unid:'',precos:[]}];
+    const nf=se.fornecedores.length;
+    se.itens.forEach(it=>{if(!Array.isArray(it.precos))it.precos=[];while(it.precos.length<nf)it.precos.push(null);it.precos.length=nf;});
+  });
   document.getElementById('orcModalTitle').textContent=ex?'Editar orçamento':'Novo orçamento';
   document.getElementById('orcDelBtn').style.display=ex?'inline-flex':'none';
   renderOrcEditor();
@@ -1031,16 +1051,16 @@ function openOrc(id){
 }
 function closeOrc(){document.getElementById('orcOverlay').classList.remove('show');draftOrc=null;orcEditId=null;}
 function setOrcField(k,v){if(draftOrc)draftOrc[k]=v;}
-function setOrcForn(fi,v){draftOrc.fornecedores[fi]=v;}
+function setSecForn(si,fi,v){draftOrc.secoes[si].fornecedores[fi]=v;}
 function setOrcSecao(si,k,v){draftOrc.secoes[si][k]=v;}
 function setOrcItem(si,ii,k,v){draftOrc.secoes[si].itens[ii][k]=v;}
 function setOrcPreco(si,ii,fi,v){draftOrc.secoes[si].itens[ii].precos[fi]=currencyToNumber(v);}
-function orcAddForn(){draftOrc.fornecedores.push('');draftOrc.secoes.forEach(se=>se.itens.forEach(it=>it.precos.push(null)));renderOrcEditor();}
-function orcDelForn(fi){draftOrc.fornecedores.splice(fi,1);draftOrc.secoes.forEach(se=>se.itens.forEach(it=>it.precos.splice(fi,1)));renderOrcEditor();}
-function orcAddSecao(){draftOrc.secoes.push({nome:'',obs:'',itens:[{descricao:'',unid:'',precos:draftOrc.fornecedores.map(()=>null)}]});renderOrcEditor();}
-function orcDelSecao(si){if(!confirm('Remover esta seção e seus itens?'))return;draftOrc.secoes.splice(si,1);renderOrcEditor();}
-function orcAddItem(si){draftOrc.secoes[si].itens.push({descricao:'',unid:'',precos:draftOrc.fornecedores.map(()=>null)});renderOrcEditor();}
-function orcDelItem(si,ii){draftOrc.secoes[si].itens.splice(ii,1);if(!draftOrc.secoes[si].itens.length)draftOrc.secoes[si].itens.push({descricao:'',unid:'',precos:draftOrc.fornecedores.map(()=>null)});renderOrcEditor();}
+function secAddForn(si){const se=draftOrc.secoes[si];se.fornecedores.push('');se.itens.forEach(it=>it.precos.push(null));renderOrcEditor();}
+function secDelForn(si,fi){const se=draftOrc.secoes[si];se.fornecedores.splice(fi,1);se.itens.forEach(it=>it.precos.splice(fi,1));renderOrcEditor();}
+function orcAddSecao(){draftOrc.secoes.push(novaSecao());renderOrcEditor();}
+function orcDelSecao(si){if(!confirm('Remover esta seção e seus itens?'))return;draftOrc.secoes.splice(si,1);if(!draftOrc.secoes.length)draftOrc.secoes=[novaSecao()];renderOrcEditor();}
+function orcAddItem(si){const se=draftOrc.secoes[si];se.itens.push({descricao:'',unid:'',precos:se.fornecedores.map(()=>null)});renderOrcEditor();}
+function orcDelItem(si,ii){const se=draftOrc.secoes[si];se.itens.splice(ii,1);if(!se.itens.length)se.itens.push({descricao:'',unid:'',precos:se.fornecedores.map(()=>null)});renderOrcEditor();}
 function orcLinkEvento(id){draftOrc.evento_id=id;
   if(id){const e=DATA.eventos.find(x=>x.id===id);if(e){
     if(!draftOrc.titulo)draftOrc.titulo=e.nome;
@@ -1063,36 +1083,35 @@ function renderOrcEditor(){
     '<div class="field"><label>Local</label><input value="'+esc(o.local||'')+'" oninput="setOrcField(\'local\',this.value)"></div>'+
     '<div class="field"><label>Responsável</label><input value="'+esc(o.responsavel||'')+'" oninput="setOrcField(\'responsavel\',this.value)"></div>'+
   '</div>';
-  html+='<div class="orc-forn-block"><div class="cl-head"><label>Fornecedores (colunas de comparação)</label><div class="cl-actions"><button class="cl-mini" onclick="orcAddForn()">+ coluna</button></div></div><div class="orc-forn-inputs">'+
-    o.fornecedores.map((f,fi)=>'<div class="orc-forn-chip"><input value="'+esc(f||'')+'" placeholder="Fornecedor '+(fi+1)+'" oninput="setOrcForn('+fi+',this.value)" onchange="renderOrcEditor()">'+(o.fornecedores.length>1?'<button class="cl-del" onclick="orcDelForn('+fi+')">✕</button>':'')+'</div>').join('')+
-  '</div></div>';
+  html+='<p class="orc-hint">Cada seção tem seus próprios fornecedores (colunas). Edite o nome direto no cabeçalho da coluna.</p>';
   o.secoes.forEach((se,si)=>{
-    html+='<div class="orc-secao"><div class="orc-secao-head"><input class="orc-secao-nome" value="'+esc(se.nome||'')+'" placeholder="Nome da seção (ex.: Produção, Estrutura, Alimentação)" oninput="setOrcSecao('+si+',\'nome\',this.value)"><button class="cl-mini danger" onclick="orcDelSecao('+si+')">remover seção</button></div>';
-    html+='<div class="orc-grid-wrap"><table class="orc-grid"><thead><tr><th style="width:34%">Item</th><th style="width:10%">Unid</th>'+
-      o.fornecedores.map(f=>'<th>'+esc(f||'Fornecedor')+'</th>').join('')+'<th style="width:26px"></th></tr></thead><tbody>';
+    const fns=se.fornecedores;
+    html+='<div class="orc-secao"><div class="orc-secao-head"><input class="orc-secao-nome" value="'+esc(se.nome||'')+'" placeholder="Nome da seção (ex.: Produção, Estrutura, Alimentação)" oninput="setOrcSecao('+si+',\'nome\',this.value)"><div class="orc-secao-actions"><button class="cl-mini" onclick="secAddForn('+si+')">+ fornecedor</button><button class="cl-mini danger" onclick="orcDelSecao('+si+')">remover seção</button></div></div>';
+    html+='<div class="orc-grid-wrap"><table class="orc-grid"><thead><tr><th style="width:32%">Item</th><th style="width:9%">Unid</th>'+
+      fns.map((f,fi)=>'<th><div class="orc-colh"><input value="'+esc(f||'')+'" placeholder="Fornecedor '+(fi+1)+'" oninput="setSecForn('+si+','+fi+',this.value)" onchange="renderOrcEditor()">'+(fns.length>1?'<button class="colh-del" title="Remover coluna" onclick="secDelForn('+si+','+fi+')">✕</button>':'')+'</div></th>').join('')+
+      '<th style="width:24px"></th></tr></thead><tbody>';
     se.itens.forEach((it,ii)=>{
       const m=orcItemMin(it);
       html+='<tr><td><input value="'+esc(it.descricao||'')+'" placeholder="Descrição do item" oninput="setOrcItem('+si+','+ii+',\'descricao\',this.value)"></td>'+
         '<td><input value="'+esc(it.unid||'')+'" placeholder="qtd" oninput="setOrcItem('+si+','+ii+',\'unid\',this.value)"></td>'+
-        o.fornecedores.map((f,fi)=>{const val=it.precos[fi];const win=(m.idx===fi&&m.min!=null);
+        fns.map((f,fi)=>{const val=it.precos[fi];const win=(m.idx===fi&&m.min!=null);
           return '<td><input class="orc-preco'+(win?' win':'')+'" inputmode="decimal" placeholder="R$ 0,00" value="'+(val!=null&&val!==''?esc(fmtBRL(val)):'')+'" oninput="maskCurrencyInput(this);setOrcPreco('+si+','+ii+','+fi+',this.value)" onchange="renderOrcEditor()"></td>';}).join('')+
         '<td><button class="cl-del" onclick="orcDelItem('+si+','+ii+')">✕</button></td></tr>';
     });
+    const stt=secTotals(se);
+    html+='<tr class="orc-subrow"><td>Subtotal</td><td></td>'+fns.map((f,fi)=>'<td>R$ '+fmtMoney(stt.porForn[fi]||0)+'</td>').join('')+'<td></td></tr>';
     html+='</tbody></table></div>';
-    html+='<div class="orc-secao-foot"><button class="cl-mini" onclick="orcAddItem('+si+')">+ item</button><input class="orc-obs" value="'+esc(se.obs||'')+'" placeholder="Observação da seção (ex.: 20 a 30 dias de produção)" oninput="setOrcSecao('+si+',\'obs\',this.value)"></div></div>';
+    html+='<div class="orc-secao-foot"><button class="cl-mini" onclick="orcAddItem('+si+')">+ item</button><input class="orc-obs" value="'+esc(se.obs||'')+'" placeholder="Observação da seção (ex.: 20 a 30 dias de produção)" oninput="setOrcSecao('+si+',\'obs\',this.value)"><span class="orc-sec-esc">Menor: <b>R$ '+fmtMoney(stt.escolhido)+'</b></span></div></div>';
   });
   html+='<button class="cl-mini" style="margin:2px 0 4px" onclick="orcAddSecao()">+ seção</button>';
-  const t=orcTotals(o);
-  html+='<div class="orc-totais"><div class="ot-title">Totais (vencedor = menor preço de cada item)</div><div class="ot-rows">'+
-    o.fornecedores.map((f,fi)=>'<div class="ot-row"><span>'+esc(f||('Fornecedor '+(fi+1)))+'</span><b>R$ '+fmtMoney(t.porForn[fi]||0)+'</b></div>').join('')+
-    '<div class="ot-row escolhido"><span>Total escolhido</span><b>R$ '+fmtMoney(t.escolhido)+'</b></div>'+
-  '</div></div>';
+  html+='<div class="orc-totais"><div class="ot-rows"><div class="ot-row escolhido"><span>Total escolhido (soma dos menores preços)</span><b>R$ '+fmtMoney(orcEscolhido(o))+'</b></div></div></div>';
   b.innerHTML=html;
 }
 function saveOrc(){
   if(!draftOrc.titulo||!draftOrc.titulo.trim()){toast('Dê um título ao orçamento.',true);return;}
   const clean=JSON.parse(JSON.stringify(draftOrc));
-  clean.fornecedores=clean.fornecedores.map(f=>(f||'').trim());
+  (clean.secoes||[]).forEach(se=>{if(Array.isArray(se.fornecedores))se.fornecedores=se.fornecedores.map(f=>(f||'').trim());});
+  clean.fornecedores=orcUniqForn(clean);   // lista agregada (só p/ referência)
   if(orcEditId){Object.assign(DATA.orcamentos.find(o=>o.id===orcEditId),clean);toast('Orçamento salvo ✓');}
   else{clean.id=uid('orc');clean.created_at=new Date().toISOString();DATA.orcamentos.unshift(clean);orcEditId=clean.id;toast('Orçamento criado ✓');}
   persist();closeOrc();renderOrc();
@@ -1106,22 +1125,25 @@ function presentOrcFromEditor(){if(draftOrc)showPresent(draftOrc);}
 function showPresent(o){document.getElementById('orcPresentSheet').innerHTML=orcPresentHTML(o);document.getElementById('orcPresentOverlay').classList.add('show');}
 function closePresent(){document.getElementById('orcPresentOverlay').classList.remove('show');}
 function orcPresentHTML(o){
-  const st=ORC_STATUS[o.status]||ORC_STATUS.rascunho;const t=orcTotals(o);
+  const st=ORC_STATUS[o.status]||ORC_STATUS.rascunho;
   const meta=[['Data',o.data],['Horário',o.horario],['Local',o.local],['Responsável',o.responsavel]];
   let h='<div class="ps-title"><span>Orçamento · '+esc(o.titulo||'')+'</span><span class="ps-status" style="background:'+st.c+'">'+st.l+'</span></div>';
   h+='<div class="ps-meta">'+meta.map(m=>'<div><span>'+m[0]+'</span>'+esc(m[1]||'—')+'</div>').join('')+'</div>';
   (o.secoes||[]).forEach(se=>{
+    const fns=secForns(se);
     if(!(se.itens||[]).some(it=>it.descricao||(it.precos||[]).some(p=>p!=null&&p!=='')) && !se.nome)return;
     h+='<div class="ps-secao">'+esc(se.nome||'Seção')+'</div>';
-    h+='<table class="ps-table"><thead><tr><th>Item</th><th>Unid</th>'+(o.fornecedores||[]).map(f=>'<th>'+esc(f||'—')+'</th>').join('')+'</tr></thead><tbody>';
+    h+='<table class="ps-table"><thead><tr><th>Item</th><th>Unid</th>'+fns.map(f=>'<th>'+esc(f||'—')+'</th>').join('')+'</tr></thead><tbody>';
     (se.itens||[]).forEach(it=>{const m=orcItemMin(it);
       h+='<tr><td>'+esc(it.descricao||'')+'</td><td>'+esc(it.unid||'')+'</td>'+
-        (o.fornecedores||[]).map((f,i)=>{const p=(it.precos||[])[i];const has=p!=null&&p!=='';const win=(m.idx===i&&m.min!=null);return '<td class="'+(win?'ps-win':'')+'">'+(has?'R$ '+fmtMoney(p):'—')+'</td>';}).join('')+'</tr>';
+        fns.map((f,i)=>{const p=(it.precos||[])[i];const has=p!=null&&p!=='';const win=(m.idx===i&&m.min!=null);return '<td class="'+(win?'ps-win':'')+'">'+(has?'R$ '+fmtMoney(p):'—')+'</td>';}).join('')+'</tr>';
     });
+    const sst=secTotals(se);
+    h+='<tr class="ps-subtotal"><td colspan="2">Total</td>'+fns.map((f,i)=>'<td>R$ '+fmtMoney(sst.porForn[i]||0)+'</td>').join('')+'</tr>';
     h+='</tbody></table>';
     if(se.obs)h+='<div class="ps-obs">Obs.: '+esc(se.obs)+'</div>';
   });
-  h+='<div class="ps-total"><span>Total escolhido (menores preços)</span><b>R$ '+fmtMoney(t.escolhido)+'</b></div>';
+  h+='<div class="ps-total"><span>Total escolhido (menores preços)</span><b>R$ '+fmtMoney(orcEscolhido(o))+'</b></div>';
   return h;
 }
 let lembFilters={resp:''};
